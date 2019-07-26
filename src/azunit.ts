@@ -187,8 +187,6 @@ class AzuTestRunner implements IAzuTestRunner {
         selectUnapproved() { 
             return new AzuResourceSet(this._settings, this._resources.filter(r => !r.isApproved()));
         }
-
-
     }
 
 class AzuTest implements IAzuTest {
