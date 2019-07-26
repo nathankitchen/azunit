@@ -1,0 +1,29 @@
+{
+  "name": "azure-unit",
+  "version": "1.0.0",
+  "description": "A lightweight unit testing framework for Microsoft Azure based on the ARM resource graphs.",
+  "main": "azunit.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "@types/node": "^12.6.8",
+    "azure-arm-resource": "^7.3.0",
+    "jsonpath": "^1.0.2",
+    "ms-rest-azure": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "unit",
+    "test",
+    "azure"
+  ],
+  "author": "Nathan Kitchen",
+  "license": "MIT"
+}
