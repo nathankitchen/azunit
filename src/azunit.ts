@@ -1,7 +1,7 @@
 import { IAzuRunEvaluator } from "./results/IAzuRunEvaluator";
 import * as Abstractions from "./azure/abstractions";
-import { IAzuLocale } from "./locale/locale";
-import { AzuLocales } from "./locale/locales";
+import * as Globalization from "./i18n/locales";
+import { MessageType } from "./i18n/messages";
 
 var JsonPath = require("jsonpath");
 
@@ -86,7 +86,7 @@ class AzuTestRunner implements IAzuTestRunner {
 
                 let results = new AzuRunResult();
 
-                this._settings.log.write("Authenticating with tenant " + tenant + "...");
+                //this._settings.log.write("Authenticating with tenant " + tenant + "...");
 
                 this._settings.authenticator.getSPTokenCredentials(tenant, clientId, secret)
                 .then((token) => {
@@ -126,7 +126,7 @@ class AzuTestRunner implements IAzuTestRunner {
 
                 let subResult = new AzuSubcriptionResult();
             
-                this._settings.log.write(`Loading subscription ${subscriptionId}...`);
+                //this._settings.log.write(`Loading subscription ${subscriptionId}...`);
 
                 this._settings.resourceProvider.list(subscriptionId, this._token)
                 .then((data: Array<any>) => {
@@ -136,7 +136,7 @@ class AzuTestRunner implements IAzuTestRunner {
                         resources.push(new AzuResource(this._settings, r));            
                     });
                     
-                    this._settings.log.write(`Found ${data.length} resources to test`);
+                    //this._settings.log.write(`Found ${data.length} resources to test`);
 
                     let sub = new AzuSubscription(this._settings, subResult, resources);
     
@@ -172,7 +172,7 @@ class AzuTestRunner implements IAzuTestRunner {
             let testResult = new AzuTestResult();
             let test = new AzuTest(this._settings, name, testResult, this._resources);
 
-            this._settings.log.write("\t" + name);
+            //this._settings.log.write("\t" + name);
             callback(test);
 
             this._result.tests.push(testResult);
@@ -263,7 +263,7 @@ class AzuResource implements IAzuTestable {
                 logMessage += "!";
             }
 
-            this._settings.log.write(logMessage);
+            //this._settings.log.write(logMessage);
             this._approved = true;
         }
     }
@@ -331,6 +331,7 @@ class AzuValue implements IAzuValue {
     private _actual : any = "";
     private _settings : IAzuSettings;
 
+
     as(name: string) {
         this._printName = name;
         return this;
@@ -339,52 +340,24 @@ class AzuValue implements IAzuValue {
     disabled() { }
     
     enabled() {
-
-        let pass = this._actual;
-        let message = "";
-
-        if (pass) {
-            message = this.formatMessage(this._settings.locale.test_assertion_enabled_pass, true, true);
-        }
-        else {
-            message = this.formatMessage(this._settings.locale.test_assertion_enabled_fail, false, true);
-        }
-
+        let message = (this._actual) ?
+            Globalization.Resources.getAssertionEnabledSuccessMessage(this.getName(), this.resourceName, this._actual):
+            Globalization.Resources.getAssertionEnabledFailureMessage(this.getName(), this.resourceName, this._actual);
+    
         this._settings.log.write(message);
     }
 
     equals(expected : any) {
-        let name = (this._printName) ? this._printName : this.name;
-        let resource = this.resourceName;
-        let actual = this._actual;
-        let pass = expected == actual;
-        let message = "";
-
-        if (pass) {
-            message = this.formatMessage(this._settings.locale.test_assertion_equals_pass, true, expected);
-        }
-        else {
-            message = this.formatMessage(this._settings.locale.test_assertion_equals_fail, false, expected);
-        }
-
+        let message = (expected == this._actual) ?
+            Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
+            Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
+        
         this._settings.log.write(message);
      }
 
-     private formatMessage(message: string, success: boolean, expected: any) {
-        const name = (this._printName) ? this._printName : this.name;
-        const resource = this.resourceName;
-        const actual = this._actual;
-        const check = (success) ? "\u2714" : "\u2718";
-        const status = (success) ? "PASSED" : "FAILED";
-
-        return message
-        .replace("{check}", check)
-        .replace("{status}", status)
-        .replace("{name}", name)
-        .replace("{actual}", actual)
-        .replace("{expected}", expected)
-        .replace("{resource}", resource);
-     }
+     protected getName() {
+        return (this._printName) ? this._printName : this.name;
+    }
 }
 
 class AzuValueSet implements IAzuValue {
@@ -468,8 +441,7 @@ class AzuAssertionResult implements IAzuAssertionResult {
 }
 
 interface IAzuSettings {
-    locale: IAzuLocale;
-    log: IAzuLogWriter;
+    log: IAzuLog;
     authenticator: Abstractions.IAzureAuthenticator;
     resourceProvider: Abstractions.IAzureResourceProvider;
 }
@@ -477,26 +449,59 @@ interface IAzuSettings {
 class AzuSettings {
 
     constructor() {
-        this.locale = AzuLocales.enGb;
-        this.log = new ConsoleLogWriter();
+        this.log = new RealtimeLog(Globalization.Culture.enGb());
         this.authenticator = new Abstractions.AzureAuthenticator();
         this.resourceProvider = new Abstractions.AzureResourceProvider();
     }
 
-    locale: IAzuLocale;
-    log: IAzuLogWriter;
+    log: IAzuLog;
     authenticator: Abstractions.IAzureAuthenticator;
     resourceProvider: Abstractions.IAzureResourceProvider;
 }
 
-interface IAzuLogWriter {
-    write(message: string): void;
+interface IAzuLog {
+
+    write(message: Globalization.IAzuCultureMessage): void;
     error(err: Error): void;
 }
 
-class ConsoleLogWriter {
-    write(message: string) {
-        console.log(message);
+class RealtimeLog {
+    constructor(locale: Globalization.IAzuLocale) {
+        this._locale = locale;
+    }
+
+    private _locale: Globalization.IAzuLocale;
+
+    write(message: Globalization.IAzuCultureMessage) {
+        
+        let iconFormatter = (i: string, t: MessageType) => {
+            if (t == MessageType.Success) {
+                return "\x1b[32m" + i + "\x1b[0m";
+            }
+            return i;
+        };
+
+        let tokenFormatter = (t: string) => {
+                return "\x1b[1m" + t + "\x1b[0m";
+        };
+
+        console.log(message.toString(this._locale, iconFormatter, tokenFormatter));
+    }
+
+    error(err: Error) {
+        console.log(err);
+    }
+}
+
+class MemoryLog {
+    constructor(locale: Globalization.IAzuLocale) {
+        this._locale = locale;
+    }
+
+    private _locale: Globalization.IAzuLocale;
+
+    write(message: Globalization.IAzuCultureMessage) {
+        console.log(message.toString(this._locale));
     }
 
     error(err: Error) {

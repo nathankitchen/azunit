@@ -116,7 +116,6 @@ export class AzureResourceProvider implements IAzureResourceProvider {
                                 if (p && p.resourceTypes) {
                                     p.resourceTypes.forEach(r => {
                                         if (r && r.apiVersions && r.apiVersions.length > 0) {
-                                            console.log(r.apiVersions);
                                             apis.push({
                                                 namespace: p.namespace,
                                                 resourceType: r.resourceType,

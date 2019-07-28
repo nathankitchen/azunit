@@ -1,6 +1,4 @@
 export interface IAzuLocale {
-    readonly test_check_pass: string;
-    readonly test_check_fail: string;
     readonly test_status_pass: string;
     readonly test_status_fail: string;
     
