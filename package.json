@@ -1,6 +1,6 @@
 {
   "name": "azunit",
-  "version": "1.0.1",
+  "version": "0.9.1-prerelease-1",
   "description": "A lightweight unit testing framework for Microsoft Azure based on the ARM resource graphs.",
   "main": "dist/azunit.js",
   "directories": {
@@ -18,6 +18,10 @@
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathankitchen/azunit.git"
   },
   "keywords": [
     "unit",

@@ -10,6 +10,27 @@ export class Culture {
 }
 
 export class Resources {
+
+    static title() {
+        return new Messages.Title();
+    }
+
+    static fatalError(err: Error) {
+        return new Messages.FatalError(err);
+    }
+
+    static statusTenant(tenant: string) {
+        return new Messages.TenantStatus(tenant);
+    }
+
+    static statusSubscription(subscription: string) {
+        return new Messages.SubscriptionStatus(subscription);
+    }
+
+    static statusTest(test: string) {
+        return new Messages.TestStatus(test);
+    }
+
     static getAssertionEqualsSuccessMessage(name: string, resource: string, expected: any, actual: any) {
         return new Messages.TestAssertionEqualsSuccess(name, resource, expected, actual);
     }
