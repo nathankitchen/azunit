@@ -1,13 +1,12 @@
-import { IAzuRunEvaluator } from "./io/IAzuRunEvaluator";
+import * as Results from "./io/results";
 import * as Abstractions from "./azure/abstractions";
 import * as Globalization from "./i18n/locales";
 import * as Log from "./io/log";
+import * as Client from "./client";
 
-var JsonPath = require("jsonpath");
+const JsonPath = require("jsonpath");
 
-type AzuTestFunc = (resources: IAzuTest) => void;
-
-type AzuRunFunc = (subscription: IAzuSubscription) => Array<Promise<void>>;
+type AzuRunFunc = (subscription: Client.IAzuTestContext) => Array<Promise<Array<Results.AzuTestResult>>>;
 
 interface IAzuTestRunner {
     useServicePrincipal(tenant: string, principalId: string, secret: string) : Promise<IAzuTestRun>;
@@ -21,50 +20,6 @@ interface IAzuTestRun {
 
 interface IAzuSubscription {
     runTests(tests: AzuRunFunc): Promise<any>;
-    test(name: string, callback: AzuTestFunc) : void;
-    selectApproved() : IAzuTestable;
-    selectUnapproved() : IAzuTestable;
-
-}
-
-interface IAzuTest {
-    selectByProvider(provider: string) : IAzuTestable;
-    selectByName(name: string) : IAzuTestable;
-}
-
-interface IAzuTestable {
-    approve(message?: string): void;
-    isApproved(): boolean;
-    shouldHaveInstanceCount : IAzuValue;
-    shouldHaveProperty(selector: string) : IAzuValue;
-}
-
-interface IAzuValue {
-    disabled() : void;
-    enabled() : void;
-    equals(value: any) : void;
-    as(name: string) : IAzuValue;
-}
-
-interface IAzuRunResult extends IAzuRunEvaluator {
-    title: string;
-    description: string;
-    subscriptions: IAzuSubscriptionResult[];
-}
-
-interface IAzuSubscriptionResult extends IAzuRunEvaluator {
-    id: string;
-    name: string;
-    tests: IAzuTestResult[];
-}
-
-interface IAzuTestResult extends IAzuRunEvaluator {
-    title: string;
-    assertions: IAzuAssertionResult[];
-}
-
-interface IAzuAssertionResult extends IAzuRunEvaluator {
-    message: string;
 }
 
 class AzuTestRunner implements IAzuTestRunner {
@@ -81,8 +36,6 @@ class AzuTestRunner implements IAzuTestRunner {
         return new Promise<IAzuTestRun>(
 
             (resolve, reject) => {
-
-                let results = new AzuRunResult();
 
                 this._settings.log.write(Globalization.Resources.statusTenant(tenant));
 
@@ -106,7 +59,6 @@ class AzuTestRun implements IAzuTestRun {
 
     name: string = "";
     description: string = "";
-    result: IAzuRunResult = new AzuRunResult();
 
     private _settings: IAzuSettings;
     private _token: Abstractions.IAzureToken;
@@ -121,7 +73,7 @@ class AzuTestRun implements IAzuTestRun {
 
         return new Promise<IAzuSubscription>((resolve, reject) => {
 
-            let subResult = new AzuSubcriptionResult();
+            let subResult = new Results.AzuSubcriptionResult();
         
             this._settings.log.write(Globalization.Resources.statusSubscription(subscriptionId));
 
@@ -147,20 +99,35 @@ class AzuTestRun implements IAzuTestRun {
 
 class AzuSubscription implements IAzuSubscription {
     
-    constructor (settings: IAzuSettings, result: IAzuSubscriptionResult, resources: Array<AzuResource>) {
+    constructor (settings: IAzuSettings, result: Results.IAzuSubscriptionResult, resources: Array<AzuResource>) {
         this._settings = settings;
         this._result = result;
         this._resources = resources;
     }
 
-    private _result: IAzuSubscriptionResult;
+    private _result: Results.IAzuSubscriptionResult;
     private _resources: Array<AzuResource>;
+
     private _settings: IAzuSettings;
 
     runTests(tests: AzuRunFunc) {
-        let wait = tests(this);
+        var context = new AzuTestContext(this._settings, this._resources);
+
+        let wait = tests(context);
+
         return Promise.all(wait);
     }
+}
+
+export class AzuTestContext implements Client.IAzuTestContext {
+
+    constructor (settings: IAzuSettings, resources: Array<AzuResource>) {
+        this._settings = settings;
+        this._resources = resources;
+    }
+
+    private _resources: Array<AzuResource>;
+    private _settings: IAzuSettings;
 
     /**
     * Performs a series of tests to verify the validity of resources.
@@ -168,30 +135,21 @@ class AzuSubscription implements IAzuSubscription {
     * @param callback A function responsible for running the tests.
     * @returns The subscription, allowing test chaining.
     */
-    test(name: string, callback: AzuTestFunc) {
+    test(name: string, callback: Client.AzuTestFunc) {
 
-        let testResult = new AzuTestResult();
+        let testResult = new Results.AzuTestResult();
+
         let test = new AzuTest(this._settings, name, testResult, this._resources);
 
         this._settings.log.write(Globalization.Resources.statusTest(name));
 
         callback(test);
-
-        this._result.tests.push(testResult);
-    }
-
-    selectApproved() {
-            return new AzuResourceSet(this._settings, this._resources.filter(r => r.isApproved()));
-    }
-
-    selectUnapproved() { 
-        return new AzuResourceSet(this._settings, this._resources.filter(r => !r.isApproved()));
     }
 }
 
-class AzuTest implements IAzuTest {
+class AzuTest implements Client.IAzuTest {
 
-    constructor (settings: IAzuSettings, title: string, result: IAzuTestResult, resources: Array<AzuResource>) {
+    constructor (settings: IAzuSettings, title: string, result: Results.IAzuTestResult, resources: Array<AzuResource>) {
         this._settings = settings;
         this.title = title;
         this._result = result;
@@ -201,7 +159,7 @@ class AzuTest implements IAzuTest {
 
     public title: string = "";
 
-    private _result: IAzuTestResult;
+    private _result: Results.IAzuTestResult;
     private _resources: Array<AzuResource>;
     private _settings: IAzuSettings;
 
@@ -223,7 +181,7 @@ class AzuTest implements IAzuTest {
 
 }
 
-class AzuResource implements IAzuTestable {
+class AzuResource implements Client.IAzuTestable {
 
     constructor(settings: IAzuSettings, resource: any) {
         this._settings = settings;
@@ -239,7 +197,7 @@ class AzuResource implements IAzuTestable {
     public provider: string = "";
     public type: string = "";
 
-    public shouldHaveInstanceCount : IAzuValue
+    public shouldHaveInstanceCount : Client.IAzuValue
 
     private _settings: IAzuSettings;
 
@@ -273,22 +231,22 @@ class AzuResource implements IAzuTestable {
     }
 }
 
-class AzuResourceSet implements IAzuTestable {
+class AzuResourceSet implements Client.IAzuTestable {
 
-    constructor(settings: IAzuSettings, resources: Array<IAzuTestable>) {
+    constructor(settings: IAzuSettings, resources: Array<Client.IAzuTestable>) {
         this._resources = resources;
         this._settings = settings;
         this.shouldHaveInstanceCount = new AzuValue(settings, "", "Instance count", this._resources.length);
     }
 
-    public shouldHaveInstanceCount : IAzuValue;
+    public shouldHaveInstanceCount : Client.IAzuValue;
 
-    private _resources: Array<IAzuTestable>;
+    private _resources: Array<Client.IAzuTestable>;
     private _settings: IAzuSettings;
 
     shouldHaveProperty(selector: string) {
 
-        let valueSet = new Array<IAzuValue>();
+        let valueSet = new Array<Client.IAzuValue>();
 
         this._resources.forEach(r => {
             valueSet.push(r.shouldHaveProperty(selector));
@@ -314,7 +272,7 @@ class AzuResourceSet implements IAzuTestable {
     }
 }
 
-class AzuValue implements IAzuValue {
+class AzuValue implements Client.IAzuValue {
 
     constructor(settings: IAzuSettings, resourceName: string, name: string, value: any) {
         this.resourceName = resourceName;
@@ -406,12 +364,11 @@ class AzuValue implements IAzuValue {
     }
 }
 
-class AzuValueSet implements IAzuValue {
+class AzuValueSet implements Client.IAzuValue {
 
-    constructor(name: string, values: Array<IAzuValue>, settings: IAzuSettings) {
+    constructor(name: string, values: Array<Client.IAzuValue>, settings: IAzuSettings) {
         this.name = name;
         this._actual = values;
-        this._settings = settings;
 
         if (!this._actual.length) {
             this._actual.push(new AzuValue(settings, "", this.name, undefined));
@@ -420,8 +377,7 @@ class AzuValueSet implements IAzuValue {
 
     public name: string = "";
 
-    private _actual : Array<IAzuValue>;
-    private _settings : IAzuSettings;
+    private _actual : Array<Client.IAzuValue>;
 
     as(name: string) {
         this._actual.forEach(v => {
@@ -448,58 +404,6 @@ class AzuValueSet implements IAzuValue {
             v.equals(expected);
         });
      }
-}
-
-class AzuRunResult implements IAzuRunResult {
-    title: string = "";
-    description: string = "";
-    subscriptions: IAzuSubscriptionResult[] = Array();
-    
-    isSuccess() {
-        this.subscriptions.forEach(a => {
-            if (!a) { return false; }
-        });
-        
-        
-        return true;
-    }
-}
-
-class AzuSubcriptionResult implements IAzuSubscriptionResult {
-    id: string = "";
-    name: string = "";
-    tests: IAzuTestResult[] = new Array();
-    isSuccess() {
-        this.tests.forEach(a => {
-            if (!a) { return false; }
-        });
-        
-        return true;
-    }
-}
-
-class AzuTestResult implements IAzuTestResult {
-    title: string = "";
-    assertions: IAzuAssertionResult[] = new Array();
-    isSuccess() {
-
-        this.assertions.forEach(a => {
-            if (!a) { return false; }
-        });
-
-        return true;
-    }
-}
-
-class AzuAssertionResult implements IAzuAssertionResult {
-    
-    message: string = "";
-    
-    private _success = true;
-    
-    isSuccess() {
-        return this._success;
-    }
 }
 
 interface IAzuSettings {

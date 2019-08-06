@@ -1,3 +1,7 @@
+import { test } from "../../src/client";
+
+// TEST: Search Service
+// DESC: asdf
 test("Search Service", (resources) => {
 
     var search = resources.selectByName("cloudskus1");

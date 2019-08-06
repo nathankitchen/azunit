@@ -2,7 +2,8 @@ import program from "commander";
 import * as AzUnit from "./main";
 import vm from "vm";
 import fs from "fs";
-import { resolve } from "dns";
+import { AzuTestFunc, IAzuTest } from "./client";
+import { IAzuTestResult, AzuTestResult, AzuAssertionResult } from "./io/results";
 
 const langRegex = /[a-z]{2}\-[A-Z]{2}/; // This is pretty lazy and needs a better solution.
 const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -33,28 +34,69 @@ runner.useServicePrincipal(program.tenant, program.principal, program.key)
         run.getSubscription(program.subscription)
             .then((subscription) => {
 
-                subscription.runTests((sub) => {
+                subscription.runTests((context) => {
 
-                    let ps = new Array<Promise<void>>();
+                    let ps = new Array<Promise<Array<IAzuTestResult>>>();
 
                     tests.forEach((test) => {
-                        ps.push(new Promise<void>((resolve, reject) => 
+                        ps.push(new Promise<Array<IAzuTestResult>>((resolve, reject) => 
                             fs.readFile(test, 'utf8', function (err, data) {
+
                                 if (err) { reject(err); }
+
+                                let results = new Array<IAzuTestResult>();
                                 
-                                const sandbox = { subscription: subscription };
                                 let script = new vm.Script(data);
-                                let context = vm.createContext(sandbox);
+
+                                const item = {
+                                    test: function(name: string, callback: AzuTestFunc) {
+                                        context.test(name, callback);
+                                    }
+                                };
+
+                                let env = vm.createContext(item);
                 
-                                script.runInContext(context);
-    
-                                resolve();
+                                script.runInContext(env);
+
+                                let a = new AzuAssertionResult(false, "Yay");
+
+                                let r = new AzuTestResult();
+
+                                r.title = "asdf";
+                                r.assertions.push(a);
+
+                                results.push(r);
+
+                                resolve(results);
                             })));
                     });
     
                     return ps;
                 })
-                .then(() => { console.log("completed");});
+                .then((results: Array<Array<IAzuTestResult>>) => {
+
+                    let success = true;
+
+                    results.forEach(r => {
+                        r.forEach(i => {
+                            if (!i.isSuccess()) {
+                                success = false;
+                            }
+
+                            console.log(i.title);
+                        });
+                    });
+
+                    if (!success) {
+                        console.log("Failed");
+                        process.exitCode = 1;
+                    }
+                    else {
+                        console.log("Success");
+                        process.exitCode = 1;  
+                    }
+                    console.log("Completed");
+                });
             });
 
         }).catch((err) => {
