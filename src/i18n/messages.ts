@@ -50,20 +50,20 @@ abstract class AzuCultureMessage {
 
         let m = this.getLocaleString(locale);
 
-        message += this.formatMessage(m, tokenFormatter);
+        message += this.formatMessage(m, tokenFormatter, locale);
 
         return message;
     }
 
     protected abstract getLocaleString(locale: IAzuLocale): string;
-    protected abstract formatMessage(message: string, tokenFormatter: TokenFormatterFunc): string;
+    protected abstract formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale): string;
 }
 
 abstract class TextCultureMessage extends AzuCultureMessage {
     public abstract readonly icon: string;
     public abstract readonly type: MessageType;
 
-    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc) { return message; }
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale) { return message; }
     protected abstract getLocaleString(locale: IAzuLocale): string;
 }
 
@@ -79,7 +79,7 @@ export class TenantStatus extends AzuCultureMessage {
     public readonly type: MessageType;
     public readonly tenant: string;
 
-    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc) {
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale) {
         return message
         .replace("{tenant}", tokenFormatter(this.tenant));
     }
@@ -98,7 +98,7 @@ export class SubscriptionStatus extends AzuCultureMessage {
     public readonly type: MessageType;
     public readonly subscription: string;
 
-    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc) {
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale) {
         return message
         .replace("{subscription}", tokenFormatter(this.subscription));
     }
@@ -119,7 +119,7 @@ export class TestStatus extends AzuCultureMessage {
     public readonly indent: number;
     public readonly testName: string;
 
-    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc) {
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale) {
         return message
         .replace("{test}", tokenFormatter(this.testName));
     }
@@ -143,12 +143,16 @@ abstract class AssertionMessage extends AzuCultureMessage {
     public abstract readonly icon: string;
     public abstract readonly type: MessageType;
 
-    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc) {
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale) {
+
+        let resourceText = (this.resource == "") ? locale.selected_resources: this.resource;
+        let actualText = (this.actual == undefined) ? locale.no_resources: this.actual;
+
         return message
         .replace("{name}", tokenFormatter(this.name))
-        .replace("{actual}", tokenFormatter(this.actual))
+        .replace("{actual}", tokenFormatter(actualText))
         .replace("{expected}", tokenFormatter(this.expected))
-        .replace("{resource}", tokenFormatter(this.resource));
+        .replace("{resource}", tokenFormatter(resourceText));
      }
 
      protected abstract getLocaleString(locale: IAzuLocale): string;
@@ -210,4 +214,12 @@ export class TestAssertionEnabledSuccess extends AssertionSuccessMessage {
 
 export class TestAssertionEnabledFailure extends AssertionFailureMessage {
     public getLocaleString(locale: IAzuLocale) { return locale.test_assertion_enabled_fail; }
+}
+
+export class TestAssertionDisabledSuccess extends AssertionSuccessMessage {
+    public getLocaleString(locale: IAzuLocale) { return locale.test_assertion_disabled_pass; }
+}
+
+export class TestAssertionDisabledFailure extends AssertionFailureMessage {
+    public getLocaleString(locale: IAzuLocale) { return locale.test_assertion_disabled_fail; }
 }

@@ -31,6 +31,10 @@ export class Resources {
         return new Messages.TestStatus(test);
     }
 
+    static getAssertionResourceExistsFailMessage(name: string, resource: string, expected: any, actual: any) {
+        return new Messages.TestAssertionEqualsSuccess(name, resource, expected, actual);
+    }
+
     static getAssertionEqualsSuccessMessage(name: string, resource: string, expected: any, actual: any) {
         return new Messages.TestAssertionEqualsSuccess(name, resource, expected, actual);
     }
@@ -45,5 +49,13 @@ export class Resources {
 
     static getAssertionEnabledFailureMessage(name: string, resource: string, actual: boolean) {
         return new Messages.TestAssertionEnabledFailure(name, resource, false, actual);
+    }
+
+    static getAssertionDisabledSuccessMessage(name: string, resource: string, actual: boolean) {
+        return new Messages.TestAssertionDisabledSuccess(name, resource, false, actual);
+    }
+
+    static getAssertionDisabledFailureMessage(name: string, resource: string, actual: boolean) {
+        return new Messages.TestAssertionDisabledFailure(name, resource, true, actual);
     }
 }

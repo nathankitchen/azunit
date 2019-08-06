@@ -24,3 +24,4 @@ node_modules/
 
 # Test harness
 src/units.js
+run.sh

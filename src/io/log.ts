@@ -70,7 +70,9 @@ export class MemoryLog {
         this._log.push(Globalization.Resources.fatalError(err));
     }
 
-    public to() {
-
+    public dump(log: IAzuLog) {
+        this._log.forEach(e => {
+            log.write(e);
+        });
     }
 }
