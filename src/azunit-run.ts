@@ -83,7 +83,8 @@ runner.useServicePrincipal(program.tenant, program.principal, program.key)
                                 success = false;
                             }
 
-                            console.log(i.title);
+                            //console.log(i.title);
+                            // Don't do this quite yet...
                         });
                     });
 
