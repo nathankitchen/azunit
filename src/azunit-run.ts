@@ -53,6 +53,8 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
     
                                     fs.readFile(filename, 'utf8', function (err, data) {
     
+                                        
+
                                         // Starts timing the file run, so needs to be created
                                         // at the start of the function.
                                         let result = new AzuFileResult();
@@ -60,7 +62,7 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
                                         if (err) { reject(err); }
     
                                         let script = new vm.Script(data);
-                                        let sandboxTitle = "Tests for " + filename;
+                                        let sandboxTitle = "Untitled";
                                         let sandboxTests = new Array();
 
                                         const item = {
@@ -76,6 +78,8 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
     
                                         script.runInContext(env);
     
+                                        ctx.log.startGroup(sandboxTitle, filename);
+                                        
                                         sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
 
                                         result.filename = filename;
@@ -85,6 +89,8 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
                                         }
 
                                         result.tests = ctx.getResults();
+                                        
+                                        ctx.log.endGroup();
 
                                         resolve(result);
                                     }));

@@ -8,7 +8,9 @@ export interface IAzuLocale {
 
     readonly status_tenant: string;
     readonly status_subscription: string;
-    readonly status_test: string;
+    readonly start_run: string;
+    readonly start_group: string;
+    readonly start_test: string;
 
     readonly resource_count: string;
     readonly selected_resources: string;

@@ -14,6 +14,28 @@ export abstract class AzuResultsWriter implements IAzuResultsWriter {
         this.filename = filename;
     }
 
+    protected stateToText(state: Results.AzuState, lowercase: boolean = false) {
+        let stateText = "Ignored";
+
+        switch (state) {
+            case Results.AzuState.Failed:
+                stateText = "Failed";
+                break;
+            case Results.AzuState.Passed:
+                stateText = "Passed";
+                break;
+            default:
+                stateText = "Ignored";
+                break;
+        }
+
+        if (lowercase) {
+            stateText = stateText.toLowerCase();
+        }
+
+        return stateText;
+    }
+
     abstract write(run: Results.IAzuRunResult) : void;
 
 }
@@ -34,7 +56,7 @@ export class XmlAzuResultsWriter extends AzuResultsWriter {
             .writeAttribute('subscription', run.subscription)
             .writeAttribute('startTime', run.start.toISOString())
             .writeAttribute('duration', run.duration)
-            .writeAttribute('success', run.isSuccess() ? "true" : "false");
+            .writeAttribute('success', this.stateToText(run.getState()));
 
         run.files.forEach(file => {
 
@@ -43,7 +65,7 @@ export class XmlAzuResultsWriter extends AzuResultsWriter {
                 .writeAttribute('name', file.filename)
                 .writeAttribute('startTime', file.start.toISOString())
                 .writeAttribute('duration', file.duration)
-                .writeAttribute('success', file.isSuccess() ? "true" : "false");
+                .writeAttribute('success', this.stateToText(file.getState()));
 
             file.tests.forEach(test => {
 
@@ -51,12 +73,12 @@ export class XmlAzuResultsWriter extends AzuResultsWriter {
                     .writeAttribute('title', test.title)
                     .writeAttribute('startTime', test.start.toISOString())
                     .writeAttribute('duration', test.duration)
-                    .writeAttribute('success', test.isSuccess() ? "true" : "false");
+                    .writeAttribute('success', this.stateToText(test.getState()));
 
                 test.assertions.forEach(assertion => {
 
                     xw.startElement('assertion')
-                        .writeAttribute('success', assertion.isSuccess() ? "true" : "false")
+                        .writeAttribute('success', this.stateToText(assertion.getState()))
                         .text(assertion.message)
                         .endElement();
                 });
@@ -82,7 +104,7 @@ export class JsonAzuResultsWriter extends AzuResultsWriter {
             start: run.start,
             duration: run.duration,
             subscription: run.subscription,
-            success: run.isSuccess(),
+            success: this.stateToText(run.getState()),
             files: new Array()
         };
 
@@ -93,7 +115,7 @@ export class JsonAzuResultsWriter extends AzuResultsWriter {
                 name: file.filename,
                 start: file.start,
                 duration: file.duration,
-                success: file.isSuccess(),
+                success: this.stateToText(file.getState()),
                 tests: new Array()
             };
 
@@ -103,14 +125,14 @@ export class JsonAzuResultsWriter extends AzuResultsWriter {
                     title: test.title,
                     start: test.start,
                     duration: test.duration,
-                    success: test.isSuccess(),
+                    success: this.stateToText(test.getState()),
                     assertions: new Array()
                 };
 
                 test.assertions.forEach(assertion => {
                     testDoc.assertions.push({
                         message: assertion.message,
-                        success: assertion.isSuccess()
+                        success: this.stateToText(assertion.getState())
                     });
                 });
 
@@ -142,7 +164,7 @@ export class HtmlAzuResultsWriter extends AzuResultsWriter {
             .endElement()
             .startElement("body")
             .startElement("main")
-            .startElement("header").writeAttribute("class", run.isSuccess() ? "success" : "failure")
+            .startElement("header").writeAttribute("class", this.stateToText(run.getState()))
             .startElement("h1").text(run.title).endElement()
             .startElement("span").text(run.subscription).endElement()
             .startElement("span").text(run.duration).endElement()

@@ -1,9 +1,21 @@
+
+/**
+ * Defines three states that a test can be in: passed, failed, or ignored.
+ * Ignored is used for empty tests (no assertions) or if the test is marked
+ * to be skipped.
+ */
+export enum AzuState {
+    Ignored,
+    Passed,
+    Failed
+}
+
 /**
  * Common operations across test results: we should be able to check for
  * success at the assertion, test, file, and run levels.
  */
 export interface IAzuRunEvaluator {
-    isSuccess() : boolean;
+    getState() : AzuState;
 }
 
 export interface IAzuAssertionResult extends IAzuRunEvaluator {
@@ -33,78 +45,75 @@ export interface IAzuRunResult extends IAzuRunEvaluator {
     files: Array<IAzuFileResult>;
 }
 
-export class AzuRunResult implements IAzuRunResult {
+export abstract class AzuBaseEvaluator implements IAzuRunEvaluator {
+    abstract getState(): AzuState;
+
+    protected evalState(set: Array<IAzuRunEvaluator>) {
+        let state = AzuState.Ignored;
+
+        if (set) {
+            for (let i=0; i<set.length; i++) {
+
+                // If any of the children have failed, then the
+                // aggregate item has failed too.
+                if (set[i].getState() == AzuState.Failed) {
+                    state = AzuState.Failed;
+                    break;
+                }
+
+                // If any of the children have passed, then the
+                // aggregate item is not ignored.
+                else if (set[i].getState() == AzuState.Passed) {
+                    state = AzuState.Passed;
+                }
+            }
+        }
+
+        return state;
+    }
+}
+
+export class AzuRunResult extends AzuBaseEvaluator implements IAzuRunResult {
     title: string = "";
     subscription: string = "";
     readonly start: Date = new Date();
     duration: number = 0;
     files: IAzuFileResult[] = new Array();
 
-    isSuccess() : boolean {
-        let success = true;
-
-        if (this.files) {
-            this.files.forEach(t => {
-                if (!t.isSuccess()) { success = false; }
-            });
-        }
-        
-        return success;
-    }
+    getState() : AzuState { return this.evalState(this.files); }
 }
 
-export class AzuFileResult implements IAzuFileResult {
+export class AzuFileResult extends AzuBaseEvaluator implements IAzuFileResult {
     title: string = "";
     filename: string = "";
     readonly start: Date = new Date();
     duration: number = 0;
-
     tests: IAzuTestResult[] = new Array();
-    isSuccess() {
-        let success = true;
 
-        if (this.tests) {
-            this.tests.forEach(t => {
-                if (!t.isSuccess()) { success = false; }
-            });
-        }
-        
-        return success;
-    }
+    getState() : AzuState { return this.evalState(this.tests); }
 }
 
-export class AzuTestResult implements IAzuTestResult {
+export class AzuTestResult extends AzuBaseEvaluator implements IAzuTestResult {
     title: string = "";
     readonly start: Date = new Date();
     duration: number = 0;
 
     assertions: Array<IAzuAssertionResult> = new Array<IAzuAssertionResult>();
     
-    isSuccess() {
-        let success = true;
-
-        if (this.assertions) {
-            this.assertions.forEach(a => {
-                if (!a.isSuccess()) { success = false; }
-            });
-        }
-
-        return success;
-    }
+    getState() : AzuState { return this.evalState(this.assertions); }
 }
 
-export class AzuAssertionResult implements IAzuAssertionResult {
+export class AzuAssertionResult extends AzuBaseEvaluator implements IAzuAssertionResult {
     
-    constructor(success: boolean, message: string) {
+    constructor(state: AzuState, message: string) {
+        super();
         this.message = message;
-        this._success = success;
+        this._state = state;
     }
 
     readonly message: string = "";
     
-    private _success: boolean;
+    private _state: AzuState;
     
-    isSuccess() {
-        return this._success;
-    }
+    getState() : AzuState { return this._state; }
 }

@@ -109,6 +109,8 @@ class AzuSubscription implements IAzuSubscription {
 
     createTestRun(name: string, callback: AzuRunFunc) : Promise<Results.IAzuRunResult> {
 
+        this._settings.log.startRun(name, "CLI");
+
         let context = new AzuRunContext(this._settings, this._resources);
 
         return callback(context)
@@ -116,7 +118,9 @@ class AzuSubscription implements IAzuSubscription {
                 let result = new Results.AzuRunResult();
                 result.title = name;
                 files.forEach(f => result.files.push(f));
-
+                
+                this._settings.log.endRun();
+                
                 return result;
             });
     }
@@ -141,13 +145,15 @@ class AzuRunContext implements IAzuRunContext {
     testFile(callback: AzuFileFunc) : Promise<Results.IAzuFileResult> {
 
         let context = new AzuTestContext(this._settings, this._resources);
+        let result = callback(context);
 
-        return callback(context);
+        return result;
     }
 }
 
 interface IAzuTestContext {
     getResults(): Array<Results.IAzuTestResult>;
+    log: Log.IAzuLog;
     test(name: string, callback: Client.AzuTestFunc): void;
 }
 
@@ -157,8 +163,11 @@ export class AzuTestContext implements IAzuTestContext {
         this._results = new Array<Results.IAzuTestResult>();
         this._settings = settings;
         this._resources = resources;
+
+        this.log = settings.log;
     }
 
+    public log: Log.IAzuLog;
     private _results: Array<Results.IAzuTestResult>;
     private _settings: IAzuSettings;
     private _resources: Array<AzuResource>;
@@ -171,15 +180,17 @@ export class AzuTestContext implements IAzuTestContext {
     */
     test(name: string, callback: Client.AzuTestFunc) {
 
+        this._settings.log.startTest(name);
+
         let result = new Results.AzuTestResult();
 
         let test = new AzuTest(this._settings, name, result, this._resources);
 
-        this._settings.log.write(Globalization.Resources.statusTest(name));
-
         callback(test);
 
         this._results.push(result);
+
+        this._settings.log.endTest();
     }
 
     getResults() {
@@ -341,63 +352,63 @@ class AzuValue implements Client.IAzuValue {
         Globalization.Resources.getAssertionDisabledSuccessMessage(this.getName(), this.resourceName, this._actual):
         Globalization.Resources.getAssertionDisabledFailureMessage(this.getName(), this.resourceName, this._actual);
 
-        this._settings.log.write(message);
+        this._settings.log.assert(message, this.resourceName, false, this._actual);
      }
     
     enabled() {
         let message = (this._actual) ?
             Globalization.Resources.getAssertionEnabledSuccessMessage(this.getName(), this.resourceName, this._actual):
             Globalization.Resources.getAssertionEnabledFailureMessage(this.getName(), this.resourceName, this._actual);
-    
-        this._settings.log.write(message);
+
+        this._settings.log.assert(message, this.resourceName, true, this._actual);
     }
 
     equals(expected : string | number | boolean) {
         let message = (expected == this._actual) ?
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
-        
-        this._settings.log.write(message);
+
+        this._settings.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      arrayContains(expected : string | number) {
         let message = (expected == this._actual) ?
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
-        
-        this._settings.log.write(message);
+
+        this._settings.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      greaterThan(expected : number) {
         let message = (expected == this._actual) ?
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
-        
-        this._settings.log.write(message);
+
+        this._settings.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      greaterThanOrEqual(expected : number) {
         let message = (expected == this._actual) ?
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
-        
-        this._settings.log.write(message);
+
+        this._settings.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      lessThan(expected : string | number) {
         let message = (expected == this._actual) ?
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
-        
-        this._settings.log.write(message);
+
+        this._settings.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      lessThanOrEqual(expected : string | number) {
         let message = (expected == this._actual) ?
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
-        
-        this._settings.log.write(message);
+
+        this._settings.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      protected getName() {
