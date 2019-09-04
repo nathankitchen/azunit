@@ -1,6 +1,6 @@
 /**
  * Common operations across test results: we should be able to check for
- * success at the assertion, test, and subscription levels.
+ * success at the assertion, test, file, and run levels.
  */
 export interface IAzuRunEvaluator {
     isSuccess() : boolean;
@@ -12,25 +12,62 @@ export interface IAzuAssertionResult extends IAzuRunEvaluator {
 
 export interface IAzuTestResult extends IAzuRunEvaluator {
     title: string;
+    readonly start: Date;
+    duration: number;
     assertions: Array<IAzuAssertionResult>;
 }
 
-export interface IAzuSubscriptionResult extends IAzuRunEvaluator {
-    id: string;
-    name: string;
+export interface IAzuFileResult extends IAzuRunEvaluator {
+    title: string;
+    readonly start: Date;
+    duration: number;
+    filename: string;
     tests: Array<IAzuTestResult>;
 }
 
-export class AzuSubcriptionResult implements IAzuSubscriptionResult {
-    id: string = "";
-    name: string = "";
+export interface IAzuRunResult extends IAzuRunEvaluator {
+    title: string;
+    subscription: string;
+    readonly start: Date;
+    duration: number;
+    files: Array<IAzuFileResult>;
+}
+
+export class AzuRunResult implements IAzuRunResult {
+    title: string = "";
+    subscription: string = "";
+    readonly start: Date = new Date();
+    duration: number = 0;
+    files: IAzuFileResult[] = new Array();
+
+    isSuccess() : boolean {
+        let success = true;
+
+        if (this.files) {
+            this.files.forEach(t => {
+                if (!t.isSuccess()) { success = false; }
+            });
+        }
+        
+        return success;
+    }
+}
+
+export class AzuFileResult implements IAzuFileResult {
+    title: string = "";
+    filename: string = "";
+    readonly start: Date = new Date();
+    duration: number = 0;
+
     tests: IAzuTestResult[] = new Array();
     isSuccess() {
         let success = true;
 
-        this.tests.forEach(t => {
-            if (!t.isSuccess()) { success = false; }
-        });
+        if (this.tests) {
+            this.tests.forEach(t => {
+                if (!t.isSuccess()) { success = false; }
+            });
+        }
         
         return success;
     }
@@ -38,14 +75,19 @@ export class AzuSubcriptionResult implements IAzuSubscriptionResult {
 
 export class AzuTestResult implements IAzuTestResult {
     title: string = "";
+    readonly start: Date = new Date();
+    duration: number = 0;
+
     assertions: Array<IAzuAssertionResult> = new Array<IAzuAssertionResult>();
     
     isSuccess() {
         let success = true;
 
-        this.assertions.forEach(a => {
-            if (!a.isSuccess()) { success = false; }
-        });
+        if (this.assertions) {
+            this.assertions.forEach(a => {
+                if (!a.isSuccess()) { success = false; }
+            });
+        }
 
         return success;
     }

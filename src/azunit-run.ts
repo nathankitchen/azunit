@@ -1,9 +1,11 @@
 import program from "commander";
 import * as AzUnit from "./main";
+import * as Results from "./io/results";
+import * as Writers from "./io/writers";
 import vm from "vm";
-import fs from "fs";
+import fs, { promises } from "fs";
 import { AzuTestFunc, IAzuTest } from "./client";
-import { IAzuTestResult, AzuTestResult, AzuAssertionResult } from "./io/results";
+import { IAzuTestResult, AzuTestResult, AzuAssertionResult, AzuFileResult } from "./io/results";
 
 const langRegex = /[a-z]{2}\-[A-Z]{2}/; // This is pretty lazy and needs a better solution.
 const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -13,80 +15,119 @@ program
     .option('-p, --principal <principal>', 'ID of the service principal with access to target subscription', guidRegex)
     .option('-k, --key <key>', 'Service principal secret')
     .option('-s, --subscription <subscription>', 'The ID of the subscription to test', guidRegex)
-    .option('-c --culture [culture]', 'Culture/language code for the run (defaults to en-GB)', langRegex, 'en-GB')
-    .option('-n --name [runName]', 'A name for the test run', undefined, 'Test run ' + new Date(Date.now()).toLocaleString())
+    .option('-rc --run-culture [culture]', 'Culture/language code for the run (defaults to en-GB)', langRegex, 'en-GB')
+    .option('-rn --run-name [name]', 'A name for the test run', undefined, 'Test run ' + new Date(Date.now()).toLocaleString())
+    .option('-ox --output-xml [path]', 'Name of the file to output results to in XML format')
+    .option('-oj --output-json [path]', 'Name of the file to output results to in JSON format')
+    .option('-oh --output-html [path]', 'Name of the file to output results to in HTML format')
+    .option('-om --output-md [path]', 'Name of the file to output results to in Markdown format')
+    .option('-oc --output-csv [path]', 'Name of the file to output results to in CSV format')
     .parse(process.argv);
 
-var tests = program.args;
+var filenames = program.args;
 
-if (!tests.length) {
+if (!filenames.length) {
     console.error('test scripts are required');
     process.exit(1);
 }
 
-let runner = AzUnit.createTestRunner();
+let app = AzUnit.createTestRunner();
 
-runner.useServicePrincipal(program.tenant, program.principal, program.key)
-    .then((run) => {
+app.useServicePrincipal(program.tenant, program.principal, program.key)
+    .then((principal) => {
 
-        run.name = program.runName;
-
-        run.getSubscription(program.subscription)
+        principal.getSubscription(program.subscription)
             .then((subscription) => {
 
-                subscription.runTests((context) => {
+                subscription.createTestRun(program.runName, (run) => {
 
-                    let ps = new Array<Promise<Array<IAzuTestResult>>>();
+                    return new Promise<Array<Results.IAzuFileResult>>((resolve, reject) => {
 
-                    tests.forEach((test) => {
-                        ps.push(new Promise<Array<IAzuTestResult>>((resolve, reject) => 
-                            fs.readFile(test, 'utf8', function (err, data) {
+                        let fileTestPromises = new Array<Promise<Results.IAzuFileResult>>();
 
-                                if (err) { reject(err); }
-
-                                let results = new Array<IAzuTestResult>();
-                                
-                                let script = new vm.Script(data);
-
-                                const item = {
-                                    test: function(name: string, callback: AzuTestFunc) {
-                                        context.test(name, callback);
-                                    }
-                                };
-
-                                let env = vm.createContext(item);
-                
-                                script.runInContext(env);
-
-                                let a = new AzuAssertionResult(false, "Yay");
-
-                                let r = new AzuTestResult();
-
-                                r.title = "asdf";
-                                r.assertions.push(a);
-
-                                results.push(r);
-
-                                resolve(results);
-                            })));
-                    });
+                        filenames.forEach((filename) => {
+                    
+                            let fileTestPromise = run.testFile((ctx) => {
     
-                    return ps;
+                                return new Promise<Results.IAzuFileResult>((resolve, reject) =>
+    
+                                    fs.readFile(filename, 'utf8', function (err, data) {
+    
+                                        // Starts timing the file run, so needs to be created
+                                        // at the start of the function.
+                                        let result = new AzuFileResult();
+
+                                        if (err) { reject(err); }
+    
+                                        let script = new vm.Script(data);
+                                        let sandboxTitle = "Tests for " + filename;
+                                        let sandboxTests = new Array();
+
+                                        const item = {
+                                            title: function(title: string) {
+                                                sandboxTitle = title;
+                                            },
+                                            test: function(name: string, callback: AzuTestFunc) {
+                                                sandboxTests.push({ name: name, callback: callback });
+                                            }
+                                        };
+    
+                                        let env = vm.createContext(item);
+    
+                                        script.runInContext(env);
+    
+                                        sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
+
+                                        result.filename = filename;
+
+                                        if (sandboxTitle) {
+                                            result.title = sandboxTitle;
+                                        }
+
+                                        result.tests = ctx.getResults();
+
+                                        resolve(result);
+                                    }));
+                                
+                                });
+                            
+                            fileTestPromises.push(fileTestPromise);
+                        });
+                        
+                        Promise.all(fileTestPromises)
+                            .then((fileResults: Array<Results.IAzuFileResult>) => {
+                                resolve(fileResults);
+                            });
+                    })
                 })
-                .then((results: Array<Array<IAzuTestResult>>) => {
+                .then((results: Results.IAzuRunResult) => {
 
                     let success = true;
 
-                    results.forEach(r => {
-                        r.forEach(i => {
-                            if (!i.isSuccess()) {
-                                success = false;
-                            }
+                    if (program.outputXml) {
+                        let xw = new Writers.XmlAzuResultsWriter(program.outputXml);
+                        xw.write(results);
+                    }
 
-                            //console.log(i.title);
-                            // Don't do this quite yet...
-                        });
-                    });
+                    if (program.outputJson) {
+                        let jw = new Writers.JsonAzuResultsWriter(program.outputJson);
+                        jw.write(results);
+                    }
+
+                    if (program.outputHtml) {
+                        let hw = new Writers.HtmlAzuResultsWriter(program.outputHtml);
+                        hw.write(results);
+                    }
+
+                    if (program.outputMd) {
+                        let mw = new Writers.MarkdownAzuResultsWriter(program.outputMd);
+                        mw.write(results);
+                    }
+
+                    if (program.outputCsv) {
+                        let cw = new Writers.CsvAzuResultsWriter(program.outputCsv);
+                        cw.write(results);
+                    }
 
                     if (!success) {
                         console.log("Failed");
@@ -94,14 +135,15 @@ runner.useServicePrincipal(program.tenant, program.principal, program.key)
                     }
                     else {
                         console.log("Success");
-                        process.exitCode = 1;  
+                        process.exitCode = 0;  
                     }
                     console.log("Completed");
-                });
+                })
+                .catch((err) => { console.log(err); });
             });
 
-        }).catch((err) => {
-            console.log('Failed');
-            console.error(err);
-            process.exitCode = 1;
-        });
+    }).catch((err) => {
+        console.log('Fatal error');
+        console.error(err);
+        process.exitCode = 1;
+    });

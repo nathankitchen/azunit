@@ -3,26 +3,32 @@ import * as Abstractions from "./azure/abstractions";
 import * as Globalization from "./i18n/locales";
 import * as Log from "./io/log";
 import * as Client from "./client";
+import { resolve } from "url";
 
 const JsonPath = require("jsonpath");
 
-type AzuRunFunc = (subscription: Client.IAzuTestContext) => Array<Promise<Array<Results.AzuTestResult>>>;
+type AzuRunFunc = (context: IAzuRunContext) => Promise<Array<Results.IAzuFileResult>>;
+type AzuFileFunc = (subscription: IAzuTestContext) => Promise<Results.IAzuFileResult>;
 
-interface IAzuTestRunner {
-    useServicePrincipal(tenant: string, principalId: string, secret: string) : Promise<IAzuTestRun>;
+interface IAzuApp {
+    useServicePrincipal(tenant: string, principalId: string, secret: string) : Promise<IAzuPrincipal>;
 }
 
-interface IAzuTestRun {
-    name: string;
-    description: string;
+interface IAzuPrincipal {
     getSubscription(id : string) : Promise<IAzuSubscription>;
 }
 
 interface IAzuSubscription {
-    runTests(tests: AzuRunFunc): Promise<any>;
+    createTestRun(name: string, callback: AzuRunFunc): Promise<Results.IAzuRunResult>;
 }
 
-class AzuTestRunner implements IAzuTestRunner {
+interface IAzuTestRun {
+    runTests(tests: Client.AzuTestFunc): Promise<Array<Results.IAzuTestResult>>;
+}
+
+
+
+class AzuApp implements IAzuApp {
 
     constructor(settings: IAzuSettings) {
         this._settings = settings;
@@ -33,7 +39,7 @@ class AzuTestRunner implements IAzuTestRunner {
 
     useServicePrincipal(tenant: string, clientId: string, secret: string) {
 
-        return new Promise<IAzuTestRun>(
+        return new Promise<IAzuPrincipal>(
 
             (resolve, reject) => {
 
@@ -41,7 +47,7 @@ class AzuTestRunner implements IAzuTestRunner {
 
                 this._settings.authenticator.getSPTokenCredentials(tenant, clientId, secret)
                 .then((token) => {
-                    let run = new AzuTestRun(this._settings, token);
+                    let run = new AzuPrincipal(this._settings, token);
                     resolve(run);
                 })
                 .catch((err) => { reject(err); });
@@ -50,15 +56,12 @@ class AzuTestRunner implements IAzuTestRunner {
     }
 }
 
-class AzuTestRun implements IAzuTestRun {
+class AzuPrincipal implements IAzuPrincipal {
 
     constructor(settings: IAzuSettings, token: Abstractions.IAzureToken) {
         this._settings = settings;
         this._token = token;
     }
-
-    name: string = "";
-    description: string = "";
 
     private _settings: IAzuSettings;
     private _token: Abstractions.IAzureToken;
@@ -72,12 +75,11 @@ class AzuTestRun implements IAzuTestRun {
     getSubscription(subscriptionId: string) {
 
         return new Promise<IAzuSubscription>((resolve, reject) => {
-
-            let subResult = new Results.AzuSubcriptionResult();
         
             this._settings.log.write(Globalization.Resources.statusSubscription(subscriptionId));
 
             this._settings.resourceProvider.list(subscriptionId, this._token)
+
             .then((data: Array<any>) => {
                 let resources = new Array<AzuResource>();
 
@@ -85,9 +87,7 @@ class AzuTestRun implements IAzuTestRun {
                     resources.push(new AzuResource(this._settings, r));            
                 });
                 
-                //this._settings.log.write(`Found ${data.length} resources to test`);
-
-                let sub = new AzuSubscription(this._settings, subResult, resources);
+                let sub = new AzuSubscription(this._settings, resources);
 
                 resolve(sub);
             })
@@ -99,28 +99,6 @@ class AzuTestRun implements IAzuTestRun {
 
 class AzuSubscription implements IAzuSubscription {
     
-    constructor (settings: IAzuSettings, result: Results.IAzuSubscriptionResult, resources: Array<AzuResource>) {
-        this._settings = settings;
-        this._result = result;
-        this._resources = resources;
-    }
-
-    private _result: Results.IAzuSubscriptionResult;
-    private _resources: Array<AzuResource>;
-
-    private _settings: IAzuSettings;
-
-    runTests(tests: AzuRunFunc) {
-        var context = new AzuTestContext(this._settings, this._resources);
-
-        let wait = tests(context);
-
-        return Promise.all(wait);
-    }
-}
-
-export class AzuTestContext implements Client.IAzuTestContext {
-
     constructor (settings: IAzuSettings, resources: Array<AzuResource>) {
         this._settings = settings;
         this._resources = resources;
@@ -128,6 +106,62 @@ export class AzuTestContext implements Client.IAzuTestContext {
 
     private _resources: Array<AzuResource>;
     private _settings: IAzuSettings;
+
+    createTestRun(name: string, callback: AzuRunFunc) : Promise<Results.IAzuRunResult> {
+
+        let context = new AzuRunContext(this._settings, this._resources);
+
+        return callback(context)
+            .then((files: Array<Results.IAzuFileResult>) => {
+                let result = new Results.AzuRunResult();
+                result.title = name;
+                files.forEach(f => result.files.push(f));
+
+                return result;
+            });
+    }
+}
+
+
+
+interface IAzuRunContext {
+    testFile(callback: AzuFileFunc): Promise<Results.IAzuFileResult>;
+}
+
+class AzuRunContext implements IAzuRunContext {
+
+    constructor (settings: IAzuSettings, resources: Array<AzuResource>) {
+        this._settings = settings;
+        this._resources = resources;
+    }
+
+    private _settings: IAzuSettings;
+    private _resources: Array<AzuResource>;
+
+    testFile(callback: AzuFileFunc) : Promise<Results.IAzuFileResult> {
+
+        let context = new AzuTestContext(this._settings, this._resources);
+
+        return callback(context);
+    }
+}
+
+interface IAzuTestContext {
+    getResults(): Array<Results.IAzuTestResult>;
+    test(name: string, callback: Client.AzuTestFunc): void;
+}
+
+export class AzuTestContext implements IAzuTestContext {
+
+    constructor (settings: IAzuSettings, resources: Array<AzuResource>) {
+        this._results = new Array<Results.IAzuTestResult>();
+        this._settings = settings;
+        this._resources = resources;
+    }
+
+    private _results: Array<Results.IAzuTestResult>;
+    private _settings: IAzuSettings;
+    private _resources: Array<AzuResource>;
 
     /**
     * Performs a series of tests to verify the validity of resources.
@@ -137,13 +171,19 @@ export class AzuTestContext implements Client.IAzuTestContext {
     */
     test(name: string, callback: Client.AzuTestFunc) {
 
-        let testResult = new Results.AzuTestResult();
+        let result = new Results.AzuTestResult();
 
-        let test = new AzuTest(this._settings, name, testResult, this._resources);
+        let test = new AzuTest(this._settings, name, result, this._resources);
 
         this._settings.log.write(Globalization.Resources.statusTest(name));
 
         callback(test);
+
+        this._results.push(result);
+    }
+
+    getResults() {
+        return this._results;
     }
 }
 
@@ -297,6 +337,7 @@ class AzuValue implements Client.IAzuValue {
 
     disabled() {
         let message = (!this._actual) ?
+
         Globalization.Resources.getAssertionDisabledSuccessMessage(this.getName(), this.resourceName, this._actual):
         Globalization.Resources.getAssertionDisabledFailureMessage(this.getName(), this.resourceName, this._actual);
 
@@ -426,5 +467,5 @@ class AzuSettings {
 
 export function createTestRunner(settings?: AzuSettings) {
     let s = settings || new AzuSettings();
-    return new AzuTestRunner(s); 
+    return new AzuApp(s); 
 }

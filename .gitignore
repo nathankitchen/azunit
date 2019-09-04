@@ -22,6 +22,9 @@ node_modules/
 # Don't source control the build output
 /dist
 
+# Ignore my test outputs
+output/*
+
 # Test harness
 src/units.js
 run.sh

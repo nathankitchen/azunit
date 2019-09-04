@@ -13,7 +13,8 @@
     "azure-arm-resource": "^7.3.0",
     "commander": "^2.20.0",
     "jsonpath": "^1.0.2",
-    "ms-rest-azure": "^3.0.0"
+    "ms-rest-azure": "^3.0.0",
+    "xml-writer": "^1.7.0"
   },
   "devDependencies": {
     "typescript": "^3.5.3",

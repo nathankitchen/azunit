@@ -1,3 +1,5 @@
+import { IAzuFileResult } from "./io/results";
+
 export type AzuTestFunc = (resources: IAzuTest) => void;
 
 export interface IAzuValue {
@@ -17,10 +19,6 @@ export interface IAzuTestable {
     isApproved(): boolean;
     shouldHaveInstanceCount: IAzuValue;
     shouldHaveProperty(selector: string): IAzuValue;
-}
-
-export interface IAzuTestContext {
-    test(name: string, callback: AzuTestFunc): void;
 }
 
 export function test(name: string, callback: AzuTestFunc) {};
