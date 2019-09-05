@@ -1,6 +1,7 @@
 import * as Globalization from "../i18n/locales";
 import * as Results from "./results";
 import { MessageType, AssertionMessage } from "../i18n/messages";
+import { AzuResultsWriter } from "./writers";
 
 export interface IAzuLog {
     write(message: Globalization.IAzuCultureMessage): void;
@@ -224,5 +225,74 @@ export class MultiLog implements IAzuLog {
     }
     abortRun(message: string): void {
         this._logs.forEach(l => l.abortRun(message));
+    }
+}
+
+export class ResultsLog extends BaseLog {
+
+    private _run: (Results.AzuRunResult | null) = null;
+    private _group: (Results.AzuFileResult | null) = null;
+    private _test: (Results.AzuTestResult | null) = null;
+
+    write(message: Globalization.IAzuCultureMessage) {
+        
+    }
+
+    error(err: Error) {
+        let message = Globalization.Resources.fatalError(err);
+        console.log(message.toString(this._locale, ));
+    }
+
+    protected openRun(name: string, subscription: string): void {
+        this._run = new Results.AzuRunResult();
+        this._run.title = name;
+        this._run.subscription = subscription;
+    }
+
+    protected openGroup(name: string, source: string): void {
+        this._group = new Results.AzuFileResult();
+        this._group.title = name;
+        this._group.filename = source;
+    }
+    
+    protected openTest(name: string): void {
+        this._test = new Results.AzuTestResult();
+    }
+    
+    protected writeAssert(message: AssertionMessage, expected: any, actual: any): void {
+        let assertion = new Results.AzuAssertionResult(message.state, message.toString(this._locale));
+
+        if (this._test) {
+            this._test.assertions.push(assertion);
+        }
+    }
+
+    protected closeTest(): void {
+        if (this._group && this._test) {
+            let end = new Date();
+            this._test.duration = end.getTime() - this._test.start.getTime();
+            this._group.tests.push(this._test);
+            this._test = null;
+        }
+    }
+
+    protected closeGroup(): void {
+        if (this._run && this._group) {
+            let end = new Date();
+            this._group.duration = end.getTime() - this._group.start.getTime();
+            this._run.files.push(this._group);
+            this._group = null;
+        }
+    }
+    
+    protected closeRun(): void {
+        if (this._run) {
+            let end = new Date();
+            this._run.duration = end.getTime() - this._run.start.getTime();
+        }
+    }
+
+    public getResults() : (Results.IAzuRunResult | null) {
+        return this._run;
     }
 }

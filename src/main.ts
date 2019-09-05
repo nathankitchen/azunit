@@ -464,7 +464,7 @@ interface IAzuSettings {
     resourceProvider: Abstractions.IAzureResourceProvider;
 }
 
-class AzuSettings {
+export class AzuSettings {
     constructor() {
         this.log = new Log.ConsoleLog(Globalization.Culture.enGb());
         this.authenticator = new Abstractions.AzureAuthenticator();
@@ -478,5 +478,6 @@ class AzuSettings {
 
 export function createTestRunner(settings?: AzuSettings) {
     let s = settings || new AzuSettings();
+
     return new AzuApp(s); 
 }

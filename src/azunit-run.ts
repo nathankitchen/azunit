@@ -2,10 +2,12 @@ import program from "commander";
 import * as AzUnit from "./main";
 import * as Results from "./io/results";
 import * as Writers from "./io/writers";
+import * as Globalization from "./i18n/locales";
 import vm from "vm";
 import fs, { promises } from "fs";
 import { AzuTestFunc, IAzuTest } from "./client";
 import { IAzuTestResult, AzuTestResult, AzuAssertionResult, AzuFileResult } from "./io/results";
+import * as Logs from "./io/log";
 
 const langRegex = /[a-z]{2}\-[A-Z]{2}/; // This is pretty lazy and needs a better solution.
 const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -31,7 +33,19 @@ if (!filenames.length) {
     process.exit(1);
 }
 
-let app = AzUnit.createTestRunner();
+let culture = Globalization.Culture.enGb();
+
+let settings = new AzUnit.AzuSettings();
+
+let logs = new Array<Logs.IAzuLog>();
+
+let resultsLog = new Logs.ResultsLog(culture);
+logs.push(new Logs.ConsoleLog(culture));
+logs.push(resultsLog);
+
+settings.log = new Logs.MultiLog(logs);
+
+let app = AzUnit.createTestRunner(settings);
 
 app.useServicePrincipal(program.tenant, program.principal, program.key)
     .then((principal) => {
@@ -109,30 +123,33 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
                 .then((results: Results.IAzuRunResult) => {
 
                     let success = true;
+                    let results2 = resultsLog.getResults();
 
-                    if (program.outputXml) {
-                        let xw = new Writers.XmlAzuResultsWriter(program.outputXml);
-                        xw.write(results);
-                    }
+                    if (results2) {
+                        if (program.outputXml) {
+                            let xw = new Writers.XmlAzuResultsWriter(program.outputXml);
+                            xw.write(results2);
+                        }
 
-                    if (program.outputJson) {
-                        let jw = new Writers.JsonAzuResultsWriter(program.outputJson);
-                        jw.write(results);
-                    }
+                        if (program.outputJson) {
+                            let jw = new Writers.JsonAzuResultsWriter(program.outputJson);
+                            jw.write(results2);
+                        }
 
-                    if (program.outputHtml) {
-                        let hw = new Writers.HtmlAzuResultsWriter(program.outputHtml);
-                        hw.write(results);
-                    }
+                        if (program.outputHtml) {
+                            let hw = new Writers.HtmlAzuResultsWriter(program.outputHtml);
+                            hw.write(results2);
+                        }
 
-                    if (program.outputMd) {
-                        let mw = new Writers.MarkdownAzuResultsWriter(program.outputMd);
-                        mw.write(results);
-                    }
+                        if (program.outputMd) {
+                            let mw = new Writers.MarkdownAzuResultsWriter(program.outputMd);
+                            mw.write(results2);
+                        }
 
-                    if (program.outputCsv) {
-                        let cw = new Writers.CsvAzuResultsWriter(program.outputCsv);
-                        cw.write(results);
+                        if (program.outputCsv) {
+                            let cw = new Writers.CsvAzuResultsWriter(program.outputCsv);
+                            cw.write(results2);
+                        }
                     }
 
                     if (!success) {

@@ -10,7 +10,7 @@ export class AzuLocaleEnGb implements IAzuLocale {
 
     readonly status_tenant: string = "Authenticating with tenant {tenant}...";
     readonly status_subscription: string = "Attempting to download resources for subscription {subscription}...";
-    readonly start_run: string = "{run}";
+    readonly start_run: string = "{run} on {subscription}";
     readonly start_group: string = "{group} from {source}";
     readonly start_test: string = "{test}";
 
