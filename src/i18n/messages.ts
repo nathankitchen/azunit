@@ -19,28 +19,25 @@ export type TokenFormatterFunc = (token: string) => string;
 export interface IAzuCultureMessage {
     readonly icon: string;
     readonly type: MessageType;
-    readonly indent: number;
-    toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc): string;
+    toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc, indent?: number): string;
 }
 
 abstract class AzuCultureMessage {
-    constructor(indent: number, type: MessageType = MessageType.Default, icon: string = "") {
-        this.indent = indent;
+    constructor(type: MessageType = MessageType.Default, icon: string = "") {
         this.type = type;
         this.icon = icon;
     }
     
     public readonly icon: string;
     public readonly type: MessageType;
-    public readonly indent: number;
 
-    public toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc) {
+    public toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc, indent: number = 0) {
         iconFormatter = iconFormatter || ((s, t) => s);
         tokenFormatter = tokenFormatter || ((s) => s);
 
         let message = "";
 
-        for (let i=0; i<this.indent; i++) {
+        for (let i=0; i<indent; i++) {
             message += "   ";
         }
 
@@ -73,7 +70,7 @@ abstract class TextCultureMessage extends AzuCultureMessage {
 
 export class TenantStatus extends AzuCultureMessage {
     constructor(tenant: string) {
-        super(0);
+        super();
         this.tenant = tenant;
     }
 
@@ -88,7 +85,7 @@ export class TenantStatus extends AzuCultureMessage {
 
 export class SubscriptionStatus extends AzuCultureMessage {
     constructor(subscription: string) {
-        super(0);
+        super();
         this.subscription = subscription;
     }
 
@@ -103,7 +100,7 @@ export class SubscriptionStatus extends AzuCultureMessage {
 
 export class StartRun extends AzuCultureMessage {
     constructor(name: string, subscription: string) {
-        super(0, MessageType.Heading, "\u25b6");
+        super(MessageType.Heading, "\u25b6");
         this.name = name;
         this.subscription = subscription;
     }
@@ -122,7 +119,7 @@ export class StartRun extends AzuCultureMessage {
 
 export class StartGroup extends AzuCultureMessage {
     constructor(groupName: string, source: string) {
-        super(1, MessageType.Heading, "\u25b6");
+        super(MessageType.Heading, "\u25b6");
         this.groupName = groupName;
         this.source = source;
     }
@@ -141,7 +138,7 @@ export class StartGroup extends AzuCultureMessage {
 
 export class StartTest extends AzuCultureMessage {
     constructor(name: string) {
-        super(2, MessageType.Heading, "\u25b6");
+        super(MessageType.Heading, "\u25b6");
         this.name = name;
     }
 
@@ -157,7 +154,7 @@ export class StartTest extends AzuCultureMessage {
 export abstract class AssertionMessage extends AzuCultureMessage {
 
     constructor(name: string, resource: string, expected: any, actual: any, state: AzuState) {
-        super(3);
+        super();
         this.name = name;
         this.resource = resource;
         this.expected = expected;
@@ -205,7 +202,7 @@ export abstract class AssertionMessage extends AzuCultureMessage {
 
 export class Title extends TextCultureMessage {
     constructor() {
-        super(0);
+        super();
     }
 
     public readonly icon: string = "";

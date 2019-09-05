@@ -5,7 +5,7 @@ import * as Writers from "./io/writers";
 import * as Globalization from "./i18n/locales";
 import vm from "vm";
 import fs, { promises } from "fs";
-import { AzuTestFunc, IAzuTest } from "./client";
+import { AzuTestFunc, IAzuTest } from "./unit/client";
 import { IAzuTestResult, AzuTestResult, AzuAssertionResult, AzuFileResult } from "./io/results";
 import * as Logs from "./io/log";
 
@@ -17,13 +17,14 @@ program
     .option('-p, --principal <principal>', 'ID of the service principal with access to target subscription', guidRegex)
     .option('-k, --key <key>', 'Service principal secret')
     .option('-s, --subscription <subscription>', 'The ID of the subscription to test', guidRegex)
-    .option('-rc --run-culture [culture]', 'Culture/language code for the run (defaults to en-GB)', langRegex, 'en-GB')
-    .option('-rn --run-name [name]', 'A name for the test run', undefined, 'Test run ' + new Date(Date.now()).toLocaleString())
-    .option('-ox --output-xml [path]', 'Name of the file to output results to in XML format')
-    .option('-oj --output-json [path]', 'Name of the file to output results to in JSON format')
-    .option('-oh --output-html [path]', 'Name of the file to output results to in HTML format')
-    .option('-om --output-md [path]', 'Name of the file to output results to in Markdown format')
-    .option('-oc --output-csv [path]', 'Name of the file to output results to in CSV format')
+    .option('-c, --run-culture [culture]', 'Culture/language code for the run (defaults to en-GB)', langRegex, 'en-GB')
+    .option('-n, --run-name [name]', 'A name for the test run', undefined, 'Test run ' + new Date(Date.now()).toLocaleString())
+    .option('-X, --output-xml [path]', 'Name of the file to output results to in XML format')
+    .option('-J, --output-json [path]', 'Name of the file to output results to in JSON format')
+    .option('-H, --output-html [path]', 'Name of the file to output results to in HTML format')
+    .option('-M, --output-md [path]', 'Name of the file to output results to in Markdown format')
+    .option('-C, --output-csv [path]', 'Name of the file to output results to in CSV format')
+    .option("-x, --silent", "Don't output test results to the command line")
     .parse(process.argv);
 
 var filenames = program.args;
@@ -40,7 +41,11 @@ let settings = new AzUnit.AzuSettings();
 let logs = new Array<Logs.IAzuLog>();
 
 let resultsLog = new Logs.ResultsLog(culture);
-logs.push(new Logs.ConsoleLog(culture));
+
+if (!program.silent) {
+    logs.push(new Logs.ConsoleLog(culture));
+}
+
 logs.push(resultsLog);
 
 settings.log = new Logs.MultiLog(logs);
@@ -55,23 +60,17 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
 
                 subscription.createTestRun(program.runName, (run) => {
 
-                    return new Promise<Array<Results.IAzuFileResult>>((resolve, reject) => {
+                    return new Promise<AzUnit.IAzuSubscription>((resolve, reject) => {
 
-                        let fileTestPromises = new Array<Promise<Results.IAzuFileResult>>();
+                        let fileTestPromises = new Array<Promise<AzUnit.IAzuTestContext>>();
 
                         filenames.forEach((filename) => {
                     
                             let fileTestPromise = run.testFile((ctx) => {
     
-                                return new Promise<Results.IAzuFileResult>((resolve, reject) =>
+                                return new Promise<AzUnit.IAzuTestContext>((resolve, reject) =>
     
                                     fs.readFile(filename, 'utf8', function (err, data) {
-    
-                                        
-
-                                        // Starts timing the file run, so needs to be created
-                                        // at the start of the function.
-                                        let result = new AzuFileResult();
 
                                         if (err) { reject(err); }
     
@@ -96,17 +95,9 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
                                         
                                         sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
 
-                                        result.filename = filename;
-
-                                        if (sandboxTitle) {
-                                            result.title = sandboxTitle;
-                                        }
-
-                                        result.tests = ctx.getResults();
-                                        
                                         ctx.log.endGroup();
 
-                                        resolve(result);
+                                        resolve(ctx);
                                     }));
                                 
                                 });
@@ -115,40 +106,43 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
                         });
                         
                         Promise.all(fileTestPromises)
-                            .then((fileResults: Array<Results.IAzuFileResult>) => {
-                                resolve(fileResults);
+                            .then((fileResults: Array<AzUnit.IAzuTestContext>) => {
+                                resolve(subscription);
                             });
                     })
                 })
-                .then((results: Results.IAzuRunResult) => {
+                .then((sub: AzUnit.IAzuSubscription) => {
 
-                    let success = true;
-                    let results2 = resultsLog.getResults();
+                    let success = false;
+                    let results = resultsLog.getResults();
 
-                    if (results2) {
+                    if (results) {
+
+                        success = results.getState() != Results.AzuState.Failed;
+
                         if (program.outputXml) {
                             let xw = new Writers.XmlAzuResultsWriter(program.outputXml);
-                            xw.write(results2);
+                            xw.write(results);
                         }
 
                         if (program.outputJson) {
                             let jw = new Writers.JsonAzuResultsWriter(program.outputJson);
-                            jw.write(results2);
+                            jw.write(results);
                         }
 
                         if (program.outputHtml) {
                             let hw = new Writers.HtmlAzuResultsWriter(program.outputHtml);
-                            hw.write(results2);
+                            hw.write(results);
                         }
 
                         if (program.outputMd) {
                             let mw = new Writers.MarkdownAzuResultsWriter(program.outputMd);
-                            mw.write(results2);
+                            mw.write(results);
                         }
 
                         if (program.outputCsv) {
                             let cw = new Writers.CsvAzuResultsWriter(program.outputCsv);
-                            cw.write(results2);
+                            cw.write(results);
                         }
                     }
 
@@ -157,10 +151,10 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
                         process.exitCode = 1;
                     }
                     else {
-                        console.log("Success");
+                        console.log("Soccess");
                         process.exitCode = 0;  
                     }
-                    console.log("Completed");
+                    console.log(culture.msg_completed);
                 })
                 .catch((err) => { console.log(err); });
             });

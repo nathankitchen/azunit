@@ -6,7 +6,12 @@ export class AzuLocaleEnGb implements IAzuLocale {
     readonly test_status_fail: string = "FAILED";
 
     readonly title: string = "AZURE UNIT";
+
+    readonly msg_completed: string = "AzUnit test run completed successfully!";
+
     readonly fatal_error: string = "{error} {message}";
+
+    readonly coverage: string = "Coverage: {percent}, ({count} of {total} resources)";
 
     readonly status_tenant: string = "Authenticating with tenant {tenant}...";
     readonly status_subscription: string = "Attempting to download resources for subscription {subscription}...";

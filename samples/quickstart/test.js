@@ -2,7 +2,7 @@ title("Quickstart 101");
 
 test("Search Service", (resources) => {
 
-    var search = resources.selectByName("someresource");
+    var search = resources.selectByName("cloudskus");
 
     search.shouldHaveInstanceCount.equals(1);
 

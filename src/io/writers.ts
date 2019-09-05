@@ -56,29 +56,29 @@ export class XmlAzuResultsWriter extends AzuResultsWriter {
             .writeAttribute('subscription', run.subscription)
             .writeAttribute('startTime', run.start.toISOString())
             .writeAttribute('duration', run.duration)
-            .writeAttribute('success', this.stateToText(run.getState()));
+            .writeAttribute('state', this.stateToText(run.getState()));
 
-        run.files.forEach(file => {
+        run.files.forEach(group => {
 
-            xw.startElement('file')
-                .writeAttribute('title', file.title)    
-                .writeAttribute('name', file.filename)
-                .writeAttribute('startTime', file.start.toISOString())
-                .writeAttribute('duration', file.duration)
-                .writeAttribute('success', this.stateToText(file.getState()));
+            xw.startElement('group')
+                .writeAttribute('title', group.title)    
+                .writeAttribute('source', group.filename)
+                .writeAttribute('startTime', group.start.toISOString())
+                .writeAttribute('duration', group.duration)
+                .writeAttribute('state', this.stateToText(group.getState()));
 
-            file.tests.forEach(test => {
+            group.tests.forEach(test => {
 
                 xw.startElement('test')
                     .writeAttribute('title', test.title)
                     .writeAttribute('startTime', test.start.toISOString())
                     .writeAttribute('duration', test.duration)
-                    .writeAttribute('success', this.stateToText(test.getState()));
+                    .writeAttribute('state', this.stateToText(test.getState()));
 
                 test.assertions.forEach(assertion => {
 
                     xw.startElement('assertion')
-                        .writeAttribute('success', this.stateToText(assertion.getState()))
+                        .writeAttribute('state', this.stateToText(assertion.getState()))
                         .text(assertion.message)
                         .endElement();
                 });
@@ -108,18 +108,18 @@ export class JsonAzuResultsWriter extends AzuResultsWriter {
             files: new Array()
         };
 
-        run.files.forEach(file => {
+        run.files.forEach(group => {
 
             let fileDoc = {
-                title: file.title,
-                name: file.filename,
-                start: file.start,
-                duration: file.duration,
-                success: this.stateToText(file.getState()),
+                title: group.title,
+                name: group.filename,
+                start: group.start,
+                duration: group.duration,
+                success: this.stateToText(group.getState()),
                 tests: new Array()
             };
 
-            file.tests.forEach(test => {
+            group.tests.forEach(test => {
 
                 let testDoc = {
                     title: test.title,
@@ -157,37 +157,50 @@ export class HtmlAzuResultsWriter extends AzuResultsWriter {
             ws.write(string, encoding);
         });
 
-
+        let styles = "\r\n\t\t\tbody { font-family: sans-serif; }\r\n"
+            + "\t\t\tol { list-style-type: none; }"
+            + "\t\t\tli.failed:before { content: \"\\2718\"; margin:0 5px 0 -15px; color: #800; }\r\n"
+            + "\t\t\tli.passed:before { content: \"\\2714\"; margin:0 5px 0 -15px; color: #080; }\r\n"
+            + "\t\t\tli.ignored:before { content: \"\\23F8\"; margin:0 5px 0 -15px; color: #888; }\r\n"
+            + "\t\t\tli.ignored { color: #444; }\r\n";
+            
         xw.startElement("html")
             .startElement("head")
             .startElement("title").text(run.title).endElement()
+            .startElement("style").text(styles).endElement()
             .endElement()
             .startElement("body")
             .startElement("main")
-            .startElement("header").writeAttribute("class", this.stateToText(run.getState()))
+            .startElement("header").writeAttribute("class", this.stateToText(run.getState(), true))
             .startElement("h1").text(run.title).endElement()
-            .startElement("span").text(run.subscription).endElement()
-            .startElement("span").text(run.duration).endElement()
-            .startElement("time").text(run.start.toISOString()).endElement()
-            .endElement();
+            .startElement("span").text(run.subscription).endElement();
 
-        run.files.forEach(file => {
+        this.writeHeaderInfo(xw, run.start, run.duration);
+
+        xw.endElement();
+
+        run.files.forEach(group => {
 
             xw.startElement("article");
-            xw.startElement("header");
-            xw.startElement("h2").text(file.title).endElement();
+            xw.startElement("header").writeAttribute("class", this.stateToText(group.getState(), true));
+            xw.startElement("h2").text(group.title).endElement();
+
+            this.writeHeaderInfo(xw, group.start, group.duration);
+
             xw.endElement(); // header
             xw.startElement("section");
 
-            file.tests.forEach(test => {
+            group.tests.forEach(test => {
 
-                xw.startElement("div");
+                xw.startElement("div").writeAttribute("class", this.stateToText(test.getState(), true));
                 xw.startElement('h3').text(test.title).endElement();
+                this.writeHeaderInfo(xw, test.start, test.duration);
                 xw.startElement("ol");
 
                 test.assertions.forEach(assertion => {
 
                     xw.startElement("li")
+                        .writeAttribute("class", this.stateToText(assertion.getState(), true))
                         .text(assertion.message)
                         .endElement();
 
@@ -205,6 +218,21 @@ export class HtmlAzuResultsWriter extends AzuResultsWriter {
         xw.endElement(); // main
         xw.endElement(); // body
         xw.endElement(); // html
+    }
+
+    private writeHeaderInfo(xw: any, start: Date, duration: number) {
+        xw.startElement("p")
+            .text("Completed in ")
+            .startElement("time")
+                .writeAttribute("datetime", "PT" + duration + "S")
+                .text(duration)
+                .endElement()
+            .text(" seconds on ")
+            .startElement("time")
+                .writeAttribute("datetime", start.toISOString())
+                .text(start.toUTCString())
+                .endElement()
+            .endElement();
     }
 }
 

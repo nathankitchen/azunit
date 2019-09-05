@@ -1,4 +1,3 @@
-
 /**
  * Defines three states that a test can be in: passed, failed, or ignored.
  * Ignored is used for empty tests (no assertions) or if the test is marked

@@ -1,4 +1,4 @@
-import { IAzuFileResult } from "./io/results";
+import { IAzuFileResult } from "../io/results";
 
 export type AzuTestFunc = (resources: IAzuTest) => void;
 
@@ -21,4 +21,5 @@ export interface IAzuTestable {
     shouldHaveProperty(selector: string): IAzuValue;
 }
 
+export function title(name: string,) {};
 export function test(name: string, callback: AzuTestFunc) {};

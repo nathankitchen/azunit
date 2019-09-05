@@ -4,7 +4,11 @@ export interface IAzuLocale {
     
     readonly title: string;
 
+    readonly msg_completed: string;
+
     readonly fatal_error: string;
+
+    readonly coverage: string;
 
     readonly status_tenant: string;
     readonly status_subscription: string;
