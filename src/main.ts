@@ -3,6 +3,8 @@ import * as Globalization from "./i18n/locales";
 import * as Log from "./io/log";
 import * as Client from "./unit/client";
 import * as Tests from "./unit/tests";
+import { AzuState } from "./io/results";
+import * as Writers from "./io/writers";
 
 type AzuRunFunc = (context: IAzuRunContext) => Promise<IAzuSubscription>;
 type AzuFileFunc = (subscription: IAzuTestContext) => Promise<IAzuTestContext>;
@@ -17,21 +19,18 @@ interface IAzuPrincipal {
 
 export interface IAzuSubscription {
     readonly subscriptionId: string;
-    createTestRun(name: string, callback: AzuRunFunc): Promise<IAzuSubscription>;
+    createTestRun(name: string, callback: AzuRunFunc): Promise<boolean>;
 }
 
-interface IAzuTestRun {
-    runTests(tests: Client.AzuTestFunc): Promise<IAzuTestRun>;
-}
 
 class AzuApp implements IAzuApp {
 
-    constructor(settings: IAzuSettings) {
-        this._settings = settings;
-        this._settings.log.write(Globalization.Resources.title());
+    constructor(services: IAzuServices) {
+        this._services = services;
+        this._services.log.write(Globalization.Resources.title());
     }
 
-    private _settings: IAzuSettings;
+    private _services: IAzuServices;
 
     useServicePrincipal(tenant: string, clientId: string, secret: string) {
 
@@ -39,11 +38,11 @@ class AzuApp implements IAzuApp {
 
             (resolve, reject) => {
 
-                this._settings.log.write(Globalization.Resources.statusTenant(tenant));
+                this._services.log.write(Globalization.Resources.statusTenant(tenant));
 
-                this._settings.authenticator.getSPTokenCredentials(tenant, clientId, secret)
+                this._services.authenticator.getSPTokenCredentials(tenant, clientId, secret)
                 .then((token) => {
-                    let run = new AzuPrincipal(this._settings, token);
+                    let run = new AzuPrincipal(this._services, token);
                     resolve(run);
                 })
                 .catch((err) => { reject(err); });
@@ -54,12 +53,12 @@ class AzuApp implements IAzuApp {
 
 class AzuPrincipal implements IAzuPrincipal {
 
-    constructor(settings: IAzuSettings, token: Abstractions.IAzureToken) {
-        this._settings = settings;
+    constructor(services: IAzuServices, token: Abstractions.IAzureToken) {
+        this._services = services;
         this._token = token;
     }
 
-    private _settings: IAzuSettings;
+    private _services: IAzuServices;
     private _token: Abstractions.IAzureToken;
 
     /**
@@ -72,18 +71,18 @@ class AzuPrincipal implements IAzuPrincipal {
 
         return new Promise<IAzuSubscription>((resolve, reject) => {
         
-            this._settings.log.write(Globalization.Resources.statusSubscription(subscriptionId));
+            this._services.log.write(Globalization.Resources.statusSubscription(subscriptionId));
 
-            this._settings.resourceProvider.list(subscriptionId, this._token)
+            this._services.resourceProvider.list(subscriptionId, this._token)
 
             .then((data: Array<any>) => {
                 let resources = new Array<Tests.AzuResource>();
 
                 data.forEach(r => {
-                    resources.push(new Tests.AzuResource(this._settings, r));            
+                    resources.push(new Tests.AzuResource(this._services, r));            
                 });
                 
-                let sub = new AzuSubscription(this._settings, subscriptionId, resources);
+                let sub = new AzuSubscription(this._services, subscriptionId, resources);
 
                 resolve(sub);
             })
@@ -95,52 +94,70 @@ class AzuPrincipal implements IAzuPrincipal {
 
 class AzuSubscription implements IAzuSubscription {
     
-    constructor (settings: IAzuSettings, subscriptionId: string, resources: Array<Tests.AzuResource>) {
-        this._settings = settings;
+    constructor (services: IAzuServices, subscriptionId: string, resources: Array<Tests.AzuResource>) {
+        this._services = services;
         this._resources = resources;
         this.subscriptionId = subscriptionId;
     }
 
     private _resources: Array<Tests.AzuResource>;
-    private _settings: IAzuSettings;
+    private _services: IAzuServices;
 
     public readonly subscriptionId: string;
 
-    createTestRun(name: string, callback: AzuRunFunc) : Promise<IAzuSubscription> {
+    createTestRun(name: string, callback: AzuRunFunc) : Promise<boolean> {
 
-        this._settings.log.startRun(name, this.subscriptionId);
+        this._services.log.startRun(name, this.subscriptionId);
 
-        let context = new AzuRunContext(this._settings, this._resources);
+        let context = new AzuRunContext(this._services, this._resources);
 
         return callback(context)
             .then((sub: IAzuSubscription) => {
 
-                this._settings.log.endRun();
-                
-                return sub;
+                let success = true;
+                let results = this._services.log.endRun();
+
+                results.forEach(result => {
+                    if (result) {
+
+                        success = (success && (result.getState() != AzuState.Failed));
+
+                        this._services.resultsWriter.write(result);
+                    }
+                });
+
+                if (!success) {
+                    console.log("Failed");
+                    process.exitCode = 1;
+                }
+                else {
+                    console.log("Soccess");
+                    process.exitCode = 0;  
+                }
+                //console.log(culture.msg_completed);
+
+                return success;
             });
     }
 }
 
-
-
-interface IAzuRunContext {
-    testFile(callback: AzuFileFunc): Promise<IAzuTestContext>;
+export interface IAzuRunContext {
+    testJob(callback: AzuFileFunc): Promise<IAzuTestContext>;
 }
 
 class AzuRunContext implements IAzuRunContext {
 
-    constructor (settings: IAzuSettings, resources: Array<Tests.AzuResource>) {
-        this._settings = settings;
+    constructor (services: IAzuServices, resources: Array<Tests.AzuResource>) {
+        this._services = services;
         this._resources = resources;
     }
 
-    private _settings: IAzuSettings;
+    private _services: IAzuServices;
     private _resources: Array<Tests.AzuResource>;
 
-    testFile(callback: AzuFileFunc) : Promise<IAzuTestContext> {
+    testJob(callback: AzuFileFunc) : Promise<IAzuTestContext> {
 
-        let context = new AzuTestContext(this._settings, this._resources);
+        let context = new AzuTestContext(this._services, this._resources);
         let result = callback(context);
 
         return result;
@@ -154,15 +171,14 @@ export interface IAzuTestContext {
 
 export class AzuTestContext implements IAzuTestContext {
 
-    constructor (settings: IAzuSettings, resources: Array<Tests.AzuResource>) {
-        this._settings = settings;
+    constructor (services: IAzuServices, resources: Array<Tests.AzuResource>) {
+        this._services = services;
         this._resources = resources;
-
-        this.log = settings.log;
+        this.log = services.log;
     }
 
     public log: Log.IAzuLog;
-    private _settings: IAzuSettings;
+    private _services: IAzuServices;
     private _resources: Array<Tests.AzuResource>;
 
     /**
@@ -173,37 +189,72 @@ export class AzuTestContext implements IAzuTestContext {
     */
     test(name: string, callback: Client.AzuTestFunc) {
 
-        this._settings.log.startTest(name);
+        this._services.log.startTest(name);
 
-        let test = new Tests.AzuTest(this._settings, name, this._resources);
+        let test = new Tests.AzuTest(this._services, name, this._resources);
 
         callback(test);
 
-        this._settings.log.endTest();
+        this._services.log.endTest();
     }
 }
 
 
-export interface IAzuSettings {
+
+export interface IAzuServices {
     log: Log.IAzuLog;
     authenticator: Abstractions.IAzureAuthenticator;
     resourceProvider: Abstractions.IAzureResourceProvider;
+    resultsWriter: Writers.IAzuResultsWriter;
 }
 
-export class AzuSettings implements IAzuSettings {
+export class AzuServices implements IAzuServices {
     constructor() {
         this.log = new Log.ConsoleLog(Globalization.Culture.enGb());
         this.authenticator = new Abstractions.AzureAuthenticator();
         this.resourceProvider = new Abstractions.AzureResourceProvider();
+        this.resultsWriter = new Writers.HtmlAzuResultsWriter("output/x.html");
     }
 
     log: Log.IAzuLog;
+    resultsWriter: Writers.IAzuResultsWriter;
     authenticator: Abstractions.IAzureAuthenticator;
     resourceProvider: Abstractions.IAzureResourceProvider;
 }
 
-export function createTestRunner(settings?: AzuSettings) {
-    let s = settings || new AzuSettings();
+export class AzuRunSettings {
 
-    return new AzuApp(s); 
+    public culture: string = "enGb";
+    public silentMode: boolean = false;
+    public outputXmlPath: string = "";
+    public outputJsonPath: string = "";
+    public outputHtmlPath: string = "";
+    public outputMarkdownPath: string = "";
+    public outputCsvPath: string = "";
+}
+
+export function createTestRunner(settings: AzuRunSettings) {
+
+    let culture = Globalization.Culture.enGb();
+
+    let logs = new Array<Log.IAzuLog>();
+    let resultsWriters = new Array<Writers.IAzuResultsWriter>();
+
+    logs.push(new Log.ResultsLog(culture));
+    if (!settings.silentMode) { logs.push(new Log.ConsoleLog(culture)); }
+
+
+
+    if (settings.outputXmlPath) { resultsWriters.push(new Writers.XmlAzuResultsWriter(settings.outputXmlPath)); }
+    if (settings.outputJsonPath) { resultsWriters.push(new Writers.JsonAzuResultsWriter(settings.outputJsonPath)); }
+    if (settings.outputHtmlPath) { resultsWriters.push(new Writers.HtmlAzuResultsWriter(settings.outputHtmlPath)); }
+    if (settings.outputMarkdownPath) { resultsWriters.push(new Writers.MarkdownAzuResultsWriter(settings.outputMarkdownPath)); }
+    if (settings.outputCsvPath) { resultsWriters.push(new Writers.CsvAzuResultsWriter(settings.outputCsvPath)); }
+
+    let services = new AzuServices();
+
+    services.log = new Log.MultiLog(logs);
+    services.resultsWriter = new Writers.MultiAzuResultsWriter(resultsWriters);
+
+    return new AzuApp(services); 
 }

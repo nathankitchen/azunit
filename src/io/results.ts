@@ -22,26 +22,26 @@ export interface IAzuAssertionResult extends IAzuRunEvaluator {
 }
 
 export interface IAzuTestResult extends IAzuRunEvaluator {
-    title: string;
+    name: string;
     readonly start: Date;
     duration: number;
     assertions: Array<IAzuAssertionResult>;
 }
 
-export interface IAzuFileResult extends IAzuRunEvaluator {
-    title: string;
+export interface IAzuGroupResult extends IAzuRunEvaluator {
+    name: string;
     readonly start: Date;
     duration: number;
-    filename: string;
+    source: string;
     tests: Array<IAzuTestResult>;
 }
 
 export interface IAzuRunResult extends IAzuRunEvaluator {
-    title: string;
+    name: string;
     subscription: string;
     readonly start: Date;
     duration: number;
-    files: Array<IAzuFileResult>;
+    groups: Array<IAzuGroupResult>;
 }
 
 export abstract class AzuBaseEvaluator implements IAzuRunEvaluator {
@@ -73,18 +73,18 @@ export abstract class AzuBaseEvaluator implements IAzuRunEvaluator {
 }
 
 export class AzuRunResult extends AzuBaseEvaluator implements IAzuRunResult {
-    title: string = "";
+    name: string = "";
     subscription: string = "";
     readonly start: Date = new Date();
     duration: number = 0;
-    files: IAzuFileResult[] = new Array();
+    groups: Array<IAzuGroupResult> = new Array();
 
-    getState() : AzuState { return this.evalState(this.files); }
+    getState() : AzuState { return this.evalState(this.groups); }
 }
 
-export class AzuFileResult extends AzuBaseEvaluator implements IAzuFileResult {
-    title: string = "";
-    filename: string = "";
+export class AzuGroupResult extends AzuBaseEvaluator implements IAzuGroupResult {
+    name: string = "";
+    source: string = "";
     readonly start: Date = new Date();
     duration: number = 0;
     tests: IAzuTestResult[] = new Array();
@@ -93,7 +93,7 @@ export class AzuFileResult extends AzuBaseEvaluator implements IAzuFileResult {
 }
 
 export class AzuTestResult extends AzuBaseEvaluator implements IAzuTestResult {
-    title: string = "";
+    name: string = "";
     readonly start: Date = new Date();
     duration: number = 0;
 

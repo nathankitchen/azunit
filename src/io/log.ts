@@ -12,8 +12,8 @@ export interface IAzuLog {
     assert(message: AssertionMessage, resource: string, expected: any, actual: any): void;
     endTest(): void;
     endGroup(): void;
-    endRun(): void;
-    abortRun(message: string): void;
+    endRun(): Array<Results.IAzuRunResult>;
+    abortRun(message: string): Array<Results.IAzuRunResult>;
 }
 
 abstract class BaseLog implements IAzuLog {
@@ -71,13 +71,15 @@ abstract class BaseLog implements IAzuLog {
         this._stack.pop();
     }
 
-    public endRun() {
+    public endRun() : Array<Results.IAzuRunResult> {
         if (this._stack.length != 1) { throw new Error("Logging failure: a test group is not on the result stack."); }
-        this.closeRun();
+        let result = this.closeRun();
         this._stack.pop();
+
+        return result;
     }
 
-    public abortRun(message: string): void {
+    public abortRun(message: string) : Array<Results.IAzuRunResult> {
         if (this._stack.length == 3) {
             this.closeTest();
         }
@@ -87,8 +89,10 @@ abstract class BaseLog implements IAzuLog {
         }
 
         if (this._stack.length == 1) {
-            this.closeRun();
+            return this.closeRun();
         }
+
+        return new Array<Results.IAzuRunResult>();
     }
 
     protected abstract openRun(name: string, subscription: string): void;
@@ -97,11 +101,10 @@ abstract class BaseLog implements IAzuLog {
     protected abstract writeAssert(message: AssertionMessage, expected: any, actual: any): void;
     protected abstract closeTest(): void;
     protected abstract closeGroup(): void;
-    protected abstract closeRun(): void;
+    protected abstract closeRun(): Array<Results.IAzuRunResult>;
 }
 
 export class ConsoleLog extends BaseLog {
-
 
     write(message: Globalization.IAzuCultureMessage) {
         
@@ -167,7 +170,8 @@ export class ConsoleLog extends BaseLog {
     protected closeGroup(): void {
     }
     
-    protected closeRun(): void {
+    protected closeRun() : Array<Results.IAzuRunResult> {
+        return new Array<Results.IAzuRunResult>();
     }
 }
 
@@ -226,18 +230,32 @@ export class MultiLog implements IAzuLog {
     endGroup(): void {
         this._logs.forEach(l => l.endGroup());
     }
-    endRun(): void {
-        this._logs.forEach(l => l.endRun());
+    endRun(): Array<Results.IAzuRunResult> {
+        let allResults = new Array<Results.IAzuRunResult>();
+
+        this._logs.forEach(l => { 
+            let results = l.endRun();
+            results.forEach(result => allResults.push(result));
+        });
+
+        return allResults;
     }
-    abortRun(message: string): void {
-        this._logs.forEach(l => l.abortRun(message));
+    abortRun(message: string): Array<Results.IAzuRunResult> {
+        let allResults = new Array<Results.IAzuRunResult>();
+
+        this._logs.forEach(l => { 
+            let results = l.abortRun(message);
+            results.forEach(result => allResults.push(result));
+        });
+
+        return allResults;
     }
 }
 
 export class ResultsLog extends BaseLog {
 
     private _run: (Results.AzuRunResult | null) = null;
-    private _group: (Results.AzuFileResult | null) = null;
+    private _group: (Results.AzuGroupResult | null) = null;
     private _test: (Results.AzuTestResult | null) = null;
 
     write(message: Globalization.IAzuCultureMessage) {
@@ -251,19 +269,19 @@ export class ResultsLog extends BaseLog {
 
     protected openRun(name: string, subscription: string): void {
         this._run = new Results.AzuRunResult();
-        this._run.title = name;
+        this._run.name = name;
         this._run.subscription = subscription;
     }
 
     protected openGroup(name: string, source: string): void {
-        this._group = new Results.AzuFileResult();
-        this._group.title = name;
-        this._group.filename = source;
+        this._group = new Results.AzuGroupResult();
+        this._group.name = name;
+        this._group.source = source;
     }
     
     protected openTest(name: string): void {
         this._test = new Results.AzuTestResult();
-        this._test.title = name;
+        this._test.name = name;
     }
     
     protected writeAssert(message: AssertionMessage, expected: any, actual: any): void {
@@ -292,19 +310,21 @@ export class ResultsLog extends BaseLog {
         if (this._run && this._group) {
             let end = new Date();
             this._group.duration = (end.getTime() - this._group.start.getTime()) / 1000;
-            this._run.files.push(this._group);
+            this._run.groups.push(this._group);
             this._group = null;
         }
     }
     
-    protected closeRun(): void {
+    protected closeRun(): Array<Results.IAzuRunResult> {
         if (this._run) {
             let end = new Date();
             this._run.duration = (end.getTime() - this._run.start.getTime()) / 1000;
-        }
-    }
 
-    public getResults() : (Results.IAzuRunResult | null) {
-        return this._run;
+            let results = new Array<Results.IAzuRunResult>();
+            results.push(this._run);
+            return results;
+        }
+
+        return new Array<Results.IAzuRunResult>();
     }
 }

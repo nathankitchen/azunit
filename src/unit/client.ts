@@ -1,5 +1,3 @@
-import { IAzuFileResult } from "../io/results";
-
 export type AzuTestFunc = (resources: IAzuTest) => void;
 
 export interface IAzuValue {

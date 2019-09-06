@@ -6,7 +6,6 @@ import * as Globalization from "./i18n/locales";
 import vm from "vm";
 import fs, { promises } from "fs";
 import { AzuTestFunc, IAzuTest } from "./unit/client";
-import { IAzuTestResult, AzuTestResult, AzuAssertionResult, AzuFileResult } from "./io/results";
 import * as Logs from "./io/log";
 
 const langRegex = /[a-z]{2}\-[A-Z]{2}/; // This is pretty lazy and needs a better solution.
@@ -34,21 +33,15 @@ if (!filenames.length) {
     process.exit(1);
 }
 
-let culture = Globalization.Culture.enGb();
+let settings = new AzUnit.AzuRunSettings();
 
-let settings = new AzUnit.AzuSettings();
+settings.silentMode = program.silent;
 
-let logs = new Array<Logs.IAzuLog>();
-
-let resultsLog = new Logs.ResultsLog(culture);
-
-if (!program.silent) {
-    logs.push(new Logs.ConsoleLog(culture));
-}
-
-logs.push(resultsLog);
-
-settings.log = new Logs.MultiLog(logs);
+settings.outputXmlPath = program.outputXml;
+settings.outputJsonPath = program.outputJson;
+settings.outputHtmlPath = program.outputHtml;
+settings.outputMarkdownPath = program.outputMd;
+settings.outputCsvPath = program.outputCsv;
 
 let app = AzUnit.createTestRunner(settings);
 
@@ -66,7 +59,7 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
 
                         filenames.forEach((filename) => {
                     
-                            let fileTestPromise = run.testFile((ctx) => {
+                            let fileTestPromise = run.testJob((ctx) => {
     
                                 return new Promise<AzUnit.IAzuTestContext>((resolve, reject) =>
     
@@ -111,50 +104,8 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
                             });
                     })
                 })
-                .then((sub: AzUnit.IAzuSubscription) => {
-
-                    let success = false;
-                    let results = resultsLog.getResults();
-
-                    if (results) {
-
-                        success = results.getState() != Results.AzuState.Failed;
-
-                        if (program.outputXml) {
-                            let xw = new Writers.XmlAzuResultsWriter(program.outputXml);
-                            xw.write(results);
-                        }
-
-                        if (program.outputJson) {
-                            let jw = new Writers.JsonAzuResultsWriter(program.outputJson);
-                            jw.write(results);
-                        }
-
-                        if (program.outputHtml) {
-                            let hw = new Writers.HtmlAzuResultsWriter(program.outputHtml);
-                            hw.write(results);
-                        }
-
-                        if (program.outputMd) {
-                            let mw = new Writers.MarkdownAzuResultsWriter(program.outputMd);
-                            mw.write(results);
-                        }
-
-                        if (program.outputCsv) {
-                            let cw = new Writers.CsvAzuResultsWriter(program.outputCsv);
-                            cw.write(results);
-                        }
-                    }
-
-                    if (!success) {
-                        console.log("Failed");
-                        process.exitCode = 1;
-                    }
-                    else {
-                        console.log("Soccess");
-                        process.exitCode = 0;  
-                    }
-                    console.log(culture.msg_completed);
+                .then((success) => {
+                    process.exitCode = (success) ? 0 : 1;
                 })
                 .catch((err) => { console.log(err); });
             });

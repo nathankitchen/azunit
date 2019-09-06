@@ -6,8 +6,8 @@ const JsonPath = require("jsonpath");
 
 export class AzuTest implements Client.IAzuTest {
 
-    constructor (settings: Main.IAzuSettings, title: string, resources: Array<AzuResource>) {
-        this._settings = settings;
+    constructor (services: Main.IAzuServices, title: string, resources: Array<AzuResource>) {
+        this._services = services;
         this.title = title;
         this._resources = resources;
     }
@@ -15,36 +15,36 @@ export class AzuTest implements Client.IAzuTest {
     public title: string = "";
 
     private _resources: Array<AzuResource>;
-    private _settings: Main.IAzuSettings;
+    private _services: Main.IAzuServices;
 
     selectByProvider(provider: string) {
-        return new AzuResourceSet(this._settings, this._resources.filter(r => r.provider.toLowerCase() === provider.toLocaleLowerCase()));
+        return new AzuResourceSet(this._services, this._resources.filter(r => r.provider.toLowerCase() === provider.toLocaleLowerCase()));
     }
     
     selectByName(name: string) {
-        return new AzuResourceSet(this._settings, this._resources.filter(r => r.name.toLowerCase() === name.toLowerCase()));
+        return new AzuResourceSet(this._services, this._resources.filter(r => r.name.toLowerCase() === name.toLowerCase()));
     }
 
     selectApproved() {
-        return new AzuResourceSet(this._settings, this._resources.filter(r => r.isApproved()));
+        return new AzuResourceSet(this._services, this._resources.filter(r => r.isApproved()));
     }
 
     selectUnapproved() {
-        return new AzuResourceSet(this._settings, this._resources);
+        return new AzuResourceSet(this._services, this._resources);
     }
 
 }
 
 export class AzuResource implements Client.IAzuTestable {
 
-    constructor(settings: Main.IAzuSettings, resource: any) {
-        this._settings = settings;
+    constructor(services: Main.IAzuServices, resource: any) {
+        this._services = services;
         this._id = resource.id;
         this.name = resource.name;
         this.provider = resource.type;
         this.type = resource.type;
         this._resource = resource;
-        this.shouldHaveInstanceCount = new AzuValue(settings, this._id, "instance count", 1);
+        this.shouldHaveInstanceCount = new AzuValue(services, this._id, "instance count", 1);
     }
 
     public name: string = "";
@@ -53,7 +53,7 @@ export class AzuResource implements Client.IAzuTestable {
 
     public shouldHaveInstanceCount : Client.IAzuValue
 
-    private _settings: Main.IAzuSettings;
+    private _services: Main.IAzuServices;
 
     private _id: string = "";
     private _resource: any;
@@ -61,7 +61,7 @@ export class AzuResource implements Client.IAzuTestable {
 
     shouldHaveProperty(selector: string) {
         let match = JsonPath.query(this._resource, selector);
-        return new AzuValue(this._settings, this.name, selector, match);
+        return new AzuValue(this._services, this.name, selector, match);
     }
 
     approve(message?: string) {
@@ -87,16 +87,16 @@ export class AzuResource implements Client.IAzuTestable {
 
 export class AzuResourceSet implements Client.IAzuTestable {
 
-    constructor(settings: Main.IAzuSettings, resources: Array<Client.IAzuTestable>) {
+    constructor(services: Main.IAzuServices, resources: Array<Client.IAzuTestable>) {
         this._resources = resources;
-        this._settings = settings;
-        this.shouldHaveInstanceCount = new AzuValue(settings, "", "Instance count", this._resources.length);
+        this._services = services;
+        this.shouldHaveInstanceCount = new AzuValue(services, "", "Instance count", this._resources.length);
     }
 
     public shouldHaveInstanceCount : Client.IAzuValue;
 
     private _resources: Array<Client.IAzuTestable>;
-    private _settings: Main.IAzuSettings;
+    private _services: Main.IAzuServices;
 
     shouldHaveProperty(selector: string) {
 
@@ -106,7 +106,7 @@ export class AzuResourceSet implements Client.IAzuTestable {
             valueSet.push(r.shouldHaveProperty(selector));
         });
 
-        return new AzuValueSet(selector, valueSet, this._settings);
+        return new AzuValueSet(selector, valueSet, this._services);
     }
 
     approve(message?: string) {
@@ -128,11 +128,11 @@ export class AzuResourceSet implements Client.IAzuTestable {
 
 export class AzuValue implements Client.IAzuValue {
 
-    constructor(settings: Main.IAzuSettings, resourceName: string, name: string, value: any) {
+    constructor(services: Main.IAzuServices, resourceName: string, name: string, value: any) {
         this.resourceName = resourceName;
         this.name = name;
         this._actual = value;
-        this._settings = settings;
+        this._services = services;
     }
 
     public readonly resourceName: string = "";
@@ -141,7 +141,7 @@ export class AzuValue implements Client.IAzuValue {
 
     private _printName : string = "";
     private _actual : any = "";
-    private _settings : Main.IAzuSettings;
+    private _services : Main.IAzuServices;
 
 
     as(name: string) {
@@ -155,7 +155,7 @@ export class AzuValue implements Client.IAzuValue {
         Globalization.Resources.getAssertionDisabledSuccessMessage(this.getName(), this.resourceName, this._actual):
         Globalization.Resources.getAssertionDisabledFailureMessage(this.getName(), this.resourceName, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, false, this._actual);
+        this._services.log.assert(message, this.resourceName, false, this._actual);
      }
     
     enabled() {
@@ -163,7 +163,7 @@ export class AzuValue implements Client.IAzuValue {
             Globalization.Resources.getAssertionEnabledSuccessMessage(this.getName(), this.resourceName, this._actual):
             Globalization.Resources.getAssertionEnabledFailureMessage(this.getName(), this.resourceName, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, true, this._actual);
+        this._services.log.assert(message, this.resourceName, true, this._actual);
     }
 
     equals(expected : string | number | boolean) {
@@ -171,7 +171,7 @@ export class AzuValue implements Client.IAzuValue {
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, expected, this._actual);
+        this._services.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      arrayContains(expected : string | number) {
@@ -179,7 +179,7 @@ export class AzuValue implements Client.IAzuValue {
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, expected, this._actual);
+        this._services.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      greaterThan(expected : number) {
@@ -187,7 +187,7 @@ export class AzuValue implements Client.IAzuValue {
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, expected, this._actual);
+        this._services.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      greaterThanOrEqual(expected : number) {
@@ -195,7 +195,7 @@ export class AzuValue implements Client.IAzuValue {
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, expected, this._actual);
+        this._services.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      lessThan(expected : string | number) {
@@ -203,7 +203,7 @@ export class AzuValue implements Client.IAzuValue {
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, expected, this._actual);
+        this._services.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      lessThanOrEqual(expected : string | number) {
@@ -211,7 +211,7 @@ export class AzuValue implements Client.IAzuValue {
             Globalization.Resources.getAssertionEqualsSuccessMessage(this.getName(), this.resourceName, expected, this._actual) :
             Globalization.Resources.getAssertionEqualsFailureMessage(this.getName(), this.resourceName, expected, this._actual);
 
-        this._settings.log.assert(message, this.resourceName, expected, this._actual);
+        this._services.log.assert(message, this.resourceName, expected, this._actual);
      }
 
      protected getName() {
@@ -221,12 +221,12 @@ export class AzuValue implements Client.IAzuValue {
 
 export class AzuValueSet implements Client.IAzuValue {
 
-    constructor(name: string, values: Array<Client.IAzuValue>, settings: Main.IAzuSettings) {
+    constructor(name: string, values: Array<Client.IAzuValue>, services: Main.IAzuServices) {
         this.name = name;
         this._actual = values;
 
         if (!this._actual.length) {
-            this._actual.push(new AzuValue(settings, "", this.name, undefined));
+            this._actual.push(new AzuValue(services, "", this.name, undefined));
         }
     }
 
