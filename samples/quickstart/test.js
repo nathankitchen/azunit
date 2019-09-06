@@ -2,7 +2,7 @@ title("Quickstart 101");
 
 test("Search Service", (resources) => {
 
-    var search = resources.selectByName("cloudskus");
+    var search = resources.selectByName("acme");
 
     search.shouldHaveInstanceCount.equals(1);
 
@@ -11,6 +11,10 @@ test("Search Service", (resources) => {
     search.shouldHaveProperty("$.location").as("Location").equals("West Europe");
     search.shouldHaveProperty("$.sku.name").as("Service Tier").equals("basic");
 
+    
+
     var storage = resources.selectByName("commands");
-    storage.shouldHaveProperty("$.properties.encryption.services.file.enabled").as("File encryption").disabled();
+    storage.shouldHaveInstanceCount.equals(0);
+
+    storage.shouldHaveProperty("$.properties.encryption.services.file.enabled").as("File encryption").enabled();
 });

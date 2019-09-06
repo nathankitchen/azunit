@@ -1,12 +1,8 @@
 import program from "commander";
 import * as AzUnit from "./main";
-import * as Results from "./io/results";
-import * as Writers from "./io/writers";
-import * as Globalization from "./i18n/locales";
 import vm from "vm";
 import fs, { promises } from "fs";
-import { AzuTestFunc, IAzuTest } from "./unit/client";
-import * as Logs from "./io/log";
+import { AzuTestFunc } from "./unit/client";
 
 const langRegex = /[a-z]{2}\-[A-Z]{2}/; // This is pretty lazy and needs a better solution.
 const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -51,59 +47,13 @@ app.useServicePrincipal(program.tenant, program.principal, program.key)
         principal.getSubscription(program.subscription)
             .then((subscription) => {
 
-                subscription.createTestRun(program.runName, (run) => {
+                let fileLoader = (filename: string) => { return new Promise<string>((resolve, reject) => {
+                    fs.readFile(filename, 'utf8', function (err, data) {
+                        resolve(data);
+                    });
+                });};
 
-                    return new Promise<AzUnit.IAzuSubscription>((resolve, reject) => {
-
-                        let fileTestPromises = new Array<Promise<AzUnit.IAzuTestContext>>();
-
-                        filenames.forEach((filename) => {
-                    
-                            let fileTestPromise = run.testJob((ctx) => {
-    
-                                return new Promise<AzUnit.IAzuTestContext>((resolve, reject) =>
-    
-                                    fs.readFile(filename, 'utf8', function (err, data) {
-
-                                        if (err) { reject(err); }
-    
-                                        let script = new vm.Script(data);
-                                        let sandboxTitle = "Untitled";
-                                        let sandboxTests = new Array();
-
-                                        const item = {
-                                            title: function(title: string) {
-                                                sandboxTitle = title;
-                                            },
-                                            test: function(name: string, callback: AzuTestFunc) {
-                                                sandboxTests.push({ name: name, callback: callback });
-                                            }
-                                        };
-    
-                                        let env = vm.createContext(item);
-    
-                                        script.runInContext(env);
-    
-                                        ctx.log.startGroup(sandboxTitle, filename);
-                                        
-                                        sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
-
-                                        ctx.log.endGroup();
-
-                                        resolve(ctx);
-                                    }));
-                                
-                                });
-                            
-                            fileTestPromises.push(fileTestPromise);
-                        });
-                        
-                        Promise.all(fileTestPromises)
-                            .then((fileResults: Array<AzUnit.IAzuTestContext>) => {
-                                resolve(subscription);
-                            });
-                    })
-                })
+                subscription.createTestRun(program.runName, filenames, fileLoader)
                 .then((success) => {
                     process.exitCode = (success) ? 0 : 1;
                 })

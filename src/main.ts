@@ -5,9 +5,11 @@ import * as Client from "./unit/client";
 import * as Tests from "./unit/tests";
 import { AzuState } from "./io/results";
 import * as Writers from "./io/writers";
+import vm from "vm";
 
-type AzuRunFunc = (context: IAzuRunContext) => Promise<IAzuSubscription>;
 type AzuFileFunc = (subscription: IAzuTestContext) => Promise<IAzuTestContext>;
+
+type AzuFileLoaderFunc = (filename: string) => Promise<string>;
 
 interface IAzuApp {
     useServicePrincipal(tenant: string, principalId: string, secret: string) : Promise<IAzuPrincipal>;
@@ -19,7 +21,7 @@ interface IAzuPrincipal {
 
 export interface IAzuSubscription {
     readonly subscriptionId: string;
-    createTestRun(name: string, callback: AzuRunFunc): Promise<boolean>;
+    createTestRun(name: string, filenames: Array<string>, fileLoader: AzuFileLoaderFunc): Promise<boolean>;
 }
 
 
@@ -105,39 +107,80 @@ class AzuSubscription implements IAzuSubscription {
 
     public readonly subscriptionId: string;
 
-    createTestRun(name: string, callback: AzuRunFunc) : Promise<boolean> {
+    createTestRun(name: string, filenames: Array<string>, fileLoader: AzuFileLoaderFunc) : Promise<boolean> {
 
         this._services.log.startRun(name, this.subscriptionId);
 
         let context = new AzuRunContext(this._services, this._resources);
 
-        return callback(context)
-            .then((sub: IAzuSubscription) => {
+        let fileTestPromises = new Array<Promise<void>>();
 
-                let success = true;
-                let results = this._services.log.endRun();
+        filenames.forEach(filename => {
 
-                results.forEach(result => {
-                    if (result) {
+            var fileTest = fileLoader(filename).then((code) => {
 
-                        success = (success && (result.getState() != AzuState.Failed));
+                let ctx = new AzuTestContext(this._services, this._resources);
 
-                        this._services.resultsWriter.write(result);
+                let script = new vm.Script(code);
+                
+                let sandboxTitle = "Untitled";
+                let sandboxTests = new Array();
+
+                const item = {
+                    title: function(title: string) {
+                        sandboxTitle = title;
+                    },
+                    test: function(name: string, callback: Client.AzuTestFunc) {
+                        sandboxTests.push({ name: name, callback: callback });
                     }
-                });
+                };
 
-                if (!success) {
-                    console.log("Failed");
-                    process.exitCode = 1;
-                }
-                else {
-                    console.log("Soccess");
-                    process.exitCode = 0;  
-                }
-                //console.log(culture.msg_completed);
+                let env = vm.createContext(item);
 
-                return success;
+                script.runInContext(env);
+
+                this._services.log.startGroup(sandboxTitle, filename);
+                
+                sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
+
+                this._services.log.endGroup();
+
+                
             });
+
+            fileTestPromises.push(fileTest);
+
+        });
+        
+        
+
+            return Promise.all(fileTestPromises)
+                            .then(() => {
+                                let success = true;
+                                let results = this._services.log.endRun();
+                
+                                
+                                results.forEach(result => {
+                                    if (result) {
+                
+                                        success = (success && (result.getState() != AzuState.Failed));
+                
+                                        this._services.resultsWriter.write(result);
+                                    }
+                                });
+                
+                                if (!success) {
+                                    console.log("Failed");
+                                    process.exitCode = 1;
+                                }
+                                else {
+                                    console.log("Soccess");
+                                    process.exitCode = 0;  
+                                }
+                                //console.log(culture.msg_completed);
+                
+                                return success;
+                            });
     }
 }
 
@@ -242,8 +285,6 @@ export function createTestRunner(settings: AzuRunSettings) {
 
     logs.push(new Log.ResultsLog(culture));
     if (!settings.silentMode) { logs.push(new Log.ConsoleLog(culture)); }
-
-
 
     if (settings.outputXmlPath) { resultsWriters.push(new Writers.XmlAzuResultsWriter(settings.outputXmlPath)); }
     if (settings.outputJsonPath) { resultsWriters.push(new Writers.JsonAzuResultsWriter(settings.outputJsonPath)); }
