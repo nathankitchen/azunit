@@ -12,12 +12,32 @@ export class Culture {
 
 export class Resources {
 
-    static title() {
-        return new Messages.Title();
+    static title(version: string) {
+        return new Messages.Title(version);
+    }
+
+    static clientTrace(message: string) {
+        return new Messages.AzuClientMessage(message, Messages.MessageType.Minor);
+    }
+
+    static clientText(message: string) {
+        return new Messages.AzuClientMessage(message, Messages.MessageType.Default);
+    }
+
+    static clientWarning(message: string) {
+        return new Messages.AzuClientMessage(message, Messages.MessageType.Warning);
+    }
+
+    static clientError(message: string) {
+        return new Messages.AzuClientMessage(message, Messages.MessageType.Error);
     }
 
     static fatalError(err: Error) {
         return new Messages.FatalError(err);
+    }
+
+    static completed() {
+        return new Messages.Completed();
     }
 
     static statusTenant(tenant: string) {
@@ -38,6 +58,14 @@ export class Resources {
 
     static startTest(test: string) {
         return new Messages.StartTest(test);
+    }
+
+    static endRunPassed(tests: number, seconds: number) {
+        return new Messages.EndRunPassed(tests, seconds);
+    }
+
+    static endRunFailed(tests: number, failures: number, seconds: number) {
+        return new Messages.EndRunFailed(tests, failures, seconds);
     }
 
     static getAssertionResourceExistsFailMessage(name: string, resource: string, expected: any, actual: any) {

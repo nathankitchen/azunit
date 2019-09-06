@@ -73,32 +73,54 @@ export abstract class AzuBaseEvaluator implements IAzuRunEvaluator {
 }
 
 export class AzuRunResult extends AzuBaseEvaluator implements IAzuRunResult {
-    name: string = "";
-    subscription: string = "";
-    readonly start: Date = new Date();
-    duration: number = 0;
-    groups: Array<IAzuGroupResult> = new Array();
+
+    constructor(name: string, subscription: string, start?: Date) {
+        super();
+        this.name = name;
+        this.subscription = subscription;
+        this.start = (start) ? start : new Date();
+    }
+
+    public readonly name: string;
+    public readonly subscription: string;
+    public readonly start: Date;
+    public readonly groups: Array<IAzuGroupResult> = new Array<IAzuGroupResult>();
+    public duration: number = 0;
 
     getState() : AzuState { return this.evalState(this.groups); }
 }
 
 export class AzuGroupResult extends AzuBaseEvaluator implements IAzuGroupResult {
-    name: string = "";
-    source: string = "";
-    readonly start: Date = new Date();
-    duration: number = 0;
-    tests: IAzuTestResult[] = new Array();
+    
+    constructor(name: string, source: string, start?: Date) {
+        super();
+        this.name = name;
+        this.source = source;
+        this.start = (start) ? start : new Date();
+    }
+
+    public readonly name: string;
+    public readonly source: string;
+    public readonly start: Date;
+    public readonly tests: Array<IAzuTestResult> = new Array<IAzuTestResult>();
+    public duration: number = 0;
 
     getState() : AzuState { return this.evalState(this.tests); }
 }
 
 export class AzuTestResult extends AzuBaseEvaluator implements IAzuTestResult {
-    name: string = "";
-    readonly start: Date = new Date();
-    duration: number = 0;
 
-    assertions: Array<IAzuAssertionResult> = new Array<IAzuAssertionResult>();
-    
+    constructor(name: string, start?: Date) {
+        super();
+        this.name = name;
+        this.start = (start) ? start : new Date();
+    }
+
+    public readonly name: string;
+    public readonly start: Date;
+    public readonly assertions: Array<IAzuAssertionResult> = new Array<IAzuAssertionResult>();
+    public duration: number = 0;
+
     getState() : AzuState { return this.evalState(this.assertions); }
 }
 
@@ -110,8 +132,8 @@ export class AzuAssertionResult extends AzuBaseEvaluator implements IAzuAssertio
         this._state = state;
     }
 
-    readonly message: string = "";
-    
+    public readonly message: string;
+
     private _state: AzuState;
     
     getState() : AzuState { return this._state; }

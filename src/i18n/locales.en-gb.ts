@@ -5,9 +5,9 @@ export class AzuLocaleEnGb implements IAzuLocale {
     readonly test_status_pass: string = "PASSED";
     readonly test_status_fail: string = "FAILED";
 
-    readonly title: string = "AZURE UNIT";
+    readonly title: string = "AzUnit";
 
-    readonly msg_completed: string = "AzUnit test run completed successfully!";
+    readonly msg_completed: string = "AzUnit completed successfully!";
 
     readonly fatal_error: string = "{error} {message}";
 
@@ -18,6 +18,8 @@ export class AzuLocaleEnGb implements IAzuLocale {
     readonly start_run: string = "{run} on {subscription}";
     readonly start_group: string = "{group} from {source}";
     readonly start_test: string = "{test}";
+    readonly end_run_passed: string = "Run succeeded with {tests} passing tests in {seconds} seconds.";
+    readonly end_run_failed: string = "Run failed with {failures} failures of {total} tests in {seconds} seconds.";
 
     readonly resource_count: string = "Resource count";
     readonly selected_resources: string = "selected resources";

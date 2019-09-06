@@ -15,6 +15,8 @@ export interface IAzuLocale {
     readonly start_run: string;
     readonly start_group: string;
     readonly start_test: string;
+    readonly end_run_passed: string;
+    readonly end_run_failed: string;
 
     readonly resource_count: string;
     readonly selected_resources: string;

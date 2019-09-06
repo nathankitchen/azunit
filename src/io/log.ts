@@ -6,9 +6,9 @@ export interface IAzuLog {
     write(message: Globalization.IAzuCultureMessage): void;
     error(err: Error): void;
 
-    startRun(name: string, subscription: string): void;
-    startGroup(name: string, source: string): void;
-    startTest(name: string): void;
+    startRun(name: string, subscription: string, start?: Date): void;
+    startGroup(name: string, source: string, start?: Date): void;
+    startTest(name: string, start?: Date): void;
     assert(message: AssertionMessage, resource: string, expected: any, actual: any): void;
     endTest(): void;
     endGroup(): void;
@@ -37,21 +37,21 @@ abstract class BaseLog implements IAzuLog {
         return 0;
     }
 
-    public startRun(name: string, subscription: string): void {
+    public startRun(name: string, subscription: string, start?: Date): void {
         if (this._stack.length != 0) { throw new Error("Logging failure: a run had already been started."); }
-        this.openRun(name, subscription);
+        this.openRun(name, subscription, start);
         this._stack.push(name);
     }
 
-    public startGroup(name: string, source: string): void {
+    public startGroup(name: string, source: string, start?: Date): void {
         if (this._stack.length != 1) { throw new Error("Logging failure: a test group has already been started."); }
-        this.openGroup(name, source);
+        this.openGroup(name, source, start);
         this._stack.push(name);
     }
 
-    public startTest(name: string): void {
+    public startTest(name: string, start?: Date): void {
         if (this._stack.length != 2) { throw new Error("Logging failure: a test has already been started."); }
-        this.openTest(name);
+        this.openTest(name, start);
         this._stack.push(name);
     }
     
@@ -65,7 +65,7 @@ abstract class BaseLog implements IAzuLog {
         this.closeTest();
         this._stack.pop();
     }
-    public endGroup() {
+    public endGroup(name?: string) {
         if (this._stack.length != 2) { throw new Error("Logging failure: a test group is not on the result stack."); }
         this.closeGroup();
         this._stack.pop();
@@ -95,12 +95,12 @@ abstract class BaseLog implements IAzuLog {
         return new Array<Results.IAzuRunResult>();
     }
 
-    protected abstract openRun(name: string, subscription: string): void;
-    protected abstract openGroup(name: string, source: string): void;
-    protected abstract openTest(name: string): void;
+    protected abstract openRun(name: string, subscription: string, start?: Date): void;
+    protected abstract openGroup(name: string, source: string, start?: Date): void;
+    protected abstract openTest(name: string, start?: Date): void;
     protected abstract writeAssert(message: AssertionMessage, expected: any, actual: any): void;
     protected abstract closeTest(): void;
-    protected abstract closeGroup(): void;
+    protected abstract closeGroup(name?: string): void;
     protected abstract closeRun(): Array<Results.IAzuRunResult>;
 }
 
@@ -122,23 +122,35 @@ export class ConsoleLog extends BaseLog {
         };
 
         // Tokens print out a bit brighter.
-        let tokenFormatter = (t: string) => {
-            return "\x1b[1m" + t + "\x1b[0m";
+        let tokenFormatter = (t: string, tokenStart?: string, tokenEnd?: string) => {
+            let start = (tokenStart) ? tokenStart : "";
+            let end = (tokenEnd) ? tokenEnd : "";
+            return start + "\x1b[1m" + t + "\x1b[0m" + end;
         };
-
-        let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize())
 
         // Errors need to print out red.
         if (message.type == MessageType.Error) {
+            let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
             console.log("\x1b[31m" + text + "\x1b[0m");
         }
         else if (message.type == MessageType.Title) {
+            let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
             console.log("\x1b[37m\x1b[4m\x1b[1m" + text + "\x1b[0m");
         }
         else if (message.type == MessageType.Heading) {
+            let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
             console.log("\x1b[34m" + text + "\x1b[0m");
         }
+        else if (message.type == MessageType.Failure && !message.icon) {
+            let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize(), "", "\x1b[31m");
+            console.log("\x1b[31m" + text + "\x1b[0m");
+        }
+        else if (message.type == MessageType.Success && !message.icon) {
+            let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize(), "", "\x1b[32m");
+            console.log("\x1b[32m" + text + "\x1b[0m");
+        }
         else {
+            let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
             console.log(text);
         }
     }
@@ -167,34 +179,11 @@ export class ConsoleLog extends BaseLog {
     protected closeTest(): void {
     }
 
-    protected closeGroup(): void {
+    protected closeGroup(name: string): void {
     }
     
     protected closeRun() : Array<Results.IAzuRunResult> {
         return new Array<Results.IAzuRunResult>();
-    }
-}
-
-export class MemoryLog {
-
-    constructor() {
-        this._log = Array<Globalization.IAzuCultureMessage>();
-    }
-
-    private _log: Array<Globalization.IAzuCultureMessage>;
-
-    public write(message: Globalization.IAzuCultureMessage) {
-        this._log.push(message);
-    }
-
-    public error(err: Error) {
-        this._log.push(Globalization.Resources.fatalError(err));
-    }
-
-    public dump(log: IAzuLog) {
-        this._log.forEach(e => {
-            log.write(e);
-        });
     }
 }
 
@@ -212,14 +201,14 @@ export class MultiLog implements IAzuLog {
     error(err: Error): void {
         this._logs.forEach(l => l.error(err));
     }
-    startRun(name: string, subscription: string): void {
-        this._logs.forEach(l => l.startRun(name, subscription));
+    startRun(name: string, subscription: string, start?: Date): void {
+        this._logs.forEach(l => l.startRun(name, subscription, start));
     }
-    startGroup(name: string, source: string): void {
-        this._logs.forEach(l => l.startGroup(name, source));
+    startGroup(name: string, source: string, start?: Date): void {
+        this._logs.forEach(l => l.startGroup(name, source, start));
     }
-    startTest(name: string): void {
-        this._logs.forEach(l => l.startTest(name));
+    startTest(name: string, start?: Date): void {
+        this._logs.forEach(l => l.startTest(name, start));
     }
     assert(message: AssertionMessage, resource: string, expected: any, actual: any): void {
         this._logs.forEach(l => l.assert(message, resource, expected, actual));
@@ -267,21 +256,16 @@ export class ResultsLog extends BaseLog {
         console.log(message.toString(this._locale, ));
     }
 
-    protected openRun(name: string, subscription: string): void {
-        this._run = new Results.AzuRunResult();
-        this._run.name = name;
-        this._run.subscription = subscription;
+    protected openRun(name: string, subscription: string, start?: Date): void {
+        this._run = new Results.AzuRunResult(name, subscription, start);
     }
 
-    protected openGroup(name: string, source: string): void {
-        this._group = new Results.AzuGroupResult();
-        this._group.name = name;
-        this._group.source = source;
+    protected openGroup(name: string, source: string, start?: Date): void {
+        this._group = new Results.AzuGroupResult(name, source, start);
     }
     
-    protected openTest(name: string): void {
-        this._test = new Results.AzuTestResult();
-        this._test.name = name;
+    protected openTest(name: string, start?: Date): void {
+        this._test = new Results.AzuTestResult(name, start);
     }
     
     protected writeAssert(message: AssertionMessage, expected: any, actual: any): void {

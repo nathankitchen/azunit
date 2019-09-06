@@ -14,12 +14,12 @@ export enum MessageType {
 }
 
 export type IconFormatterFunc = (token: string, type: MessageType) => string;
-export type TokenFormatterFunc = (token: string) => string;
+export type TokenFormatterFunc = (token: string, start?: string, end?: string) => string;
 
 export interface IAzuCultureMessage {
     readonly icon: string;
     readonly type: MessageType;
-    toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc, indent?: number): string;
+    toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc, indent?: number, tokenStart?: string, tokenEnd?: string): string;
 }
 
 abstract class AzuCultureMessage {
@@ -31,7 +31,7 @@ abstract class AzuCultureMessage {
     public readonly icon: string;
     public readonly type: MessageType;
 
-    public toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc, indent: number = 0) {
+    public toString(locale: IAzuLocale, iconFormatter?: IconFormatterFunc, tokenFormatter?: TokenFormatterFunc, indent: number = 0, tokenStart?: string, tokenEnd?: string) {
         iconFormatter = iconFormatter || ((s, t) => s);
         tokenFormatter = tokenFormatter || ((s) => s);
 
@@ -51,21 +51,31 @@ abstract class AzuCultureMessage {
 
         let m = this.getLocaleString(locale);
 
-        message += this.formatMessage(m, tokenFormatter, locale);
+        message += this.formatMessage(m, tokenFormatter, locale, tokenStart, tokenEnd);
 
         return message;
     }
 
     protected abstract getLocaleString(locale: IAzuLocale): string;
-    protected abstract formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale): string;
+    protected abstract formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale, tokenStart?: string, tokenEnd?: string): string;
 }
 
 abstract class TextCultureMessage extends AzuCultureMessage {
-    public abstract readonly icon: string;
-    public abstract readonly type: MessageType;
-
-    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale) { return message; }
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale, tokenStart?: string, tokenEnd?: string) { return message; }
     protected abstract getLocaleString(locale: IAzuLocale): string;
+}
+
+export class AzuClientMessage extends TextCultureMessage {
+    constructor(message: string, type: MessageType) {
+        super(type, " ");
+        this._message = message;
+    }
+
+    private readonly _message: string;
+    
+    protected getLocaleString(locale: IAzuLocale): string {
+        return this._message;
+    }
 }
 
 export class TenantStatus extends AzuCultureMessage {
@@ -200,14 +210,56 @@ export abstract class AssertionMessage extends AzuCultureMessage {
      protected abstract getLocaleString(locale: IAzuLocale): string;
 }
 
-export class Title extends TextCultureMessage {
-    constructor() {
-        super();
+export class EndRunPassed extends AzuCultureMessage {
+    constructor(tests: number, seconds: number) {
+        super(MessageType.Success, "");
+        this.tests = tests;
+        this.seconds = seconds;
     }
 
-    public readonly icon: string = "";
-    public readonly type: MessageType = MessageType.Title;
-    public getLocaleString(locale: IAzuLocale) { return locale.title; }
+    public readonly tests: number;
+    public readonly seconds: number;
+
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale, tokenStart?: string, tokenEnd?: string) {
+        return message
+        .replace("{tests}", tokenFormatter(this.tests.toString(), tokenStart, tokenEnd))
+        .replace("{seconds}", tokenFormatter(this.seconds.toString(), tokenStart, tokenEnd));
+    }
+
+    protected getLocaleString(locale: IAzuLocale) { return locale.end_run_passed; }
+}
+
+export class EndRunFailed extends AzuCultureMessage {
+    constructor(tests: number, failures: number, seconds: number) {
+        super(MessageType.Failure, "");
+        this.tests = tests;
+        this.failures = failures;
+        this.seconds = seconds;
+    }
+
+    public readonly tests: number;
+    public readonly failures: number;
+    public readonly seconds: number;
+
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: IAzuLocale, tokenStart?: string, tokenEnd?: string) {
+        return message
+        .replace("{total}", tokenFormatter(this.tests.toString(), tokenStart, tokenEnd))
+        .replace("{failures}", tokenFormatter(this.failures.toString(), tokenStart, tokenEnd))
+        .replace("{seconds}", tokenFormatter(this.seconds.toString(), tokenStart, tokenEnd));
+    }
+    
+    protected getLocaleString(locale: IAzuLocale) { return locale.end_run_failed; }
+}
+
+export class Title extends TextCultureMessage {
+    constructor(version: string) {
+        super(MessageType.Title, "");
+        this.version = version;
+    }
+
+    public readonly version: string;
+
+    public getLocaleString(locale: IAzuLocale) { return locale.title + " v" + this.version; }
 }
 
 export class FatalError extends AzuCultureMessage {
@@ -228,6 +280,14 @@ export class FatalError extends AzuCultureMessage {
         .replace("{error}", tokenFormatter(this.error.name))
         .replace("{message}", tokenFormatter(this.error.message));
      }
+}
+
+export class Completed extends TextCultureMessage {
+    constructor() {
+        super(MessageType.Default, "");
+    }
+
+    public getLocaleString(locale: IAzuLocale) { return locale.msg_completed; }
 }
 
 export class TestAssertionEqualsSuccess extends AssertionMessage {

@@ -3,6 +3,7 @@ import * as Globalization from "./i18n/locales";
 import * as Log from "./io/log";
 import * as Client from "./unit/client";
 import * as Tests from "./unit/tests";
+import * as Package from "../package.json";
 import { AzuState } from "./io/results";
 import * as Writers from "./io/writers";
 import vm from "vm";
@@ -21,7 +22,7 @@ interface IAzuPrincipal {
 
 export interface IAzuSubscription {
     readonly subscriptionId: string;
-    createTestRun(name: string, filenames: Array<string>, fileLoader: AzuFileLoaderFunc): Promise<boolean>;
+    createTestRun(name: string, filenames: Array<string>, parameterFile: string, fileLoader: AzuFileLoaderFunc): Promise<boolean>;
 }
 
 
@@ -29,7 +30,7 @@ class AzuApp implements IAzuApp {
 
     constructor(services: IAzuServices) {
         this._services = services;
-        this._services.log.write(Globalization.Resources.title());
+        this._services.log.write(Globalization.Resources.title(Package.version));
     }
 
     private _services: IAzuServices;
@@ -107,80 +108,88 @@ class AzuSubscription implements IAzuSubscription {
 
     public readonly subscriptionId: string;
 
-    createTestRun(name: string, filenames: Array<string>, fileLoader: AzuFileLoaderFunc) : Promise<boolean> {
+    createTestRun(name: string, filenames: Array<string>, parameterFile: string, fileLoader: AzuFileLoaderFunc) : Promise<boolean> {
 
         this._services.log.startRun(name, this.subscriptionId);
 
         let context = new AzuRunContext(this._services, this._resources);
 
-        let fileTestPromises = new Array<Promise<void>>();
+        return fileLoader(parameterFile).then((jsonParamString: string) => {
+            return JSON.parse(jsonParamString);
+        })
+        .then((p: any) => {
 
-        filenames.forEach(filename => {
+            let fileTestPromises = new Array<Promise<void>>();
 
-            var fileTest = fileLoader(filename).then((code) => {
-
-                let ctx = new AzuTestContext(this._services, this._resources);
-
-                let script = new vm.Script(code);
-                
-                let sandboxTitle = "Untitled";
-                let sandboxTests = new Array();
-
-                const item = {
-                    title: function(title: string) {
-                        sandboxTitle = title;
-                    },
-                    test: function(name: string, callback: Client.AzuTestFunc) {
-                        sandboxTests.push({ name: name, callback: callback });
-                    }
-                };
-
-                let env = vm.createContext(item);
-
-                script.runInContext(env);
-
-                this._services.log.startGroup(sandboxTitle, filename);
-                
-                sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
-
-                this._services.log.endGroup();
-
-                
+            filenames.forEach(filename => {
+    
+                var fileTest = fileLoader(filename).then((code) => {
+    
+                    let start = new Date();
+                    let ctx = new AzuTestContext(this._services, this._resources);
+    
+                    let script = new vm.Script(code);
+                    
+                    let sandboxTitle = "Untitled";
+                    let sandboxTests = new Array();
+    
+                    const item = {
+                        title: function(title: string) {
+                            sandboxTitle = title;
+                        },
+                        test: function(name: string, callback: Client.AzuTestFunc) {
+                            sandboxTests.push({ name: name, callback: callback });
+                        },
+                        log: {
+                            trace: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); },
+                            write: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); },
+                            warning: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); },
+                            error: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); }
+                        },
+                        parameters: p
+                    };
+    
+                    let env = vm.createContext(item);
+    
+                    script.runInContext(env);
+    
+                    this._services.log.startGroup(sandboxTitle, filename, start);
+                    
+                    sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
+    
+                    this._services.log.endGroup();
+                });
+    
+                fileTestPromises.push(fileTest);
+    
             });
-
-            fileTestPromises.push(fileTest);
+    
+            return Promise.all(fileTestPromises)
+                .then(() => {
+                    let success = true;
+                    let results = this._services.log.endRun();
+    
+                    results.forEach(result => {
+                        if (result) {
+                            success = (success && (result.getState() != AzuState.Failed));
+                            this._services.resultsWriter.write(result);
+                        }
+                    });
+    
+                    if (!success) {
+                        this._services.log.write(Globalization.Resources.endRunFailed(10, 2, 0.1));
+                    }
+                    else {
+                        this._services.log.write(Globalization.Resources.endRunPassed(10, 0.1));
+                    }
+    
+                    this._services.log.write(Globalization.Resources.completed());
+    
+                    return success;
+                });
+    
 
         });
-        
-        
-
-            return Promise.all(fileTestPromises)
-                            .then(() => {
-                                let success = true;
-                                let results = this._services.log.endRun();
-                
-                                
-                                results.forEach(result => {
-                                    if (result) {
-                
-                                        success = (success && (result.getState() != AzuState.Failed));
-                
-                                        this._services.resultsWriter.write(result);
-                                    }
-                                });
-                
-                                if (!success) {
-                                    console.log("Failed");
-                                    process.exitCode = 1;
-                                }
-                                else {
-                                    console.log("Soccess");
-                                    process.exitCode = 0;  
-                                }
-                                //console.log(culture.msg_completed);
-                
-                                return success;
-                            });
     }
 }
 
