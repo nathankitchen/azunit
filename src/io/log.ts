@@ -9,11 +9,13 @@ export interface IAzuLog {
     startRun(name: string, subscription: string, start?: Date): void;
     startGroup(name: string, source: string, start?: Date): void;
     startTest(name: string, start?: Date): void;
-    assert(message: AssertionMessage, resource: string, expected: any, actual: any): void;
+    assert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void;
     endTest(): void;
     endGroup(): void;
     endRun(): Array<Results.IAzuRunResult>;
     abortRun(message: string): Array<Results.IAzuRunResult>;
+
+    trackResource(resourceId: string, resourceName: string): void;
 }
 
 abstract class BaseLog implements IAzuLog {
@@ -55,9 +57,9 @@ abstract class BaseLog implements IAzuLog {
         this._stack.push(name);
     }
     
-    public assert(message: AssertionMessage, expected: any, actual: any): void {
+    public assert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void {
         if (this._stack.length != 3) { throw new Error("Logging failure: a test is not on the result stack."); }
-        this.writeAssert(message, expected, actual);        
+        this.writeAssert(message, resourceId, resourceName, expected, actual);        
     }
     
     public endTest() {
@@ -95,10 +97,12 @@ abstract class BaseLog implements IAzuLog {
         return new Array<Results.IAzuRunResult>();
     }
 
+    public abstract trackResource(resourceId: string, resourceName: string): void;
+
     protected abstract openRun(name: string, subscription: string, start?: Date): void;
     protected abstract openGroup(name: string, source: string, start?: Date): void;
     protected abstract openTest(name: string, start?: Date): void;
-    protected abstract writeAssert(message: AssertionMessage, expected: any, actual: any): void;
+    protected abstract writeAssert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void;
     protected abstract closeTest(): void;
     protected abstract closeGroup(name?: string): void;
     protected abstract closeRun(): Array<Results.IAzuRunResult>;
@@ -172,7 +176,7 @@ export class ConsoleLog extends BaseLog {
         this.write(Globalization.Resources.startTest(name));
     }
     
-    protected writeAssert(message: AssertionMessage, expected: any, actual: any): void {
+    protected writeAssert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void {
         this.write(message);
     }
 
@@ -185,6 +189,8 @@ export class ConsoleLog extends BaseLog {
     protected closeRun() : Array<Results.IAzuRunResult> {
         return new Array<Results.IAzuRunResult>();
     }
+
+    public trackResource(resourceId: string, resourceName: string): void {}
 }
 
 export class MultiLog implements IAzuLog {
@@ -210,8 +216,8 @@ export class MultiLog implements IAzuLog {
     startTest(name: string, start?: Date): void {
         this._logs.forEach(l => l.startTest(name, start));
     }
-    assert(message: AssertionMessage, resource: string, expected: any, actual: any): void {
-        this._logs.forEach(l => l.assert(message, resource, expected, actual));
+    assert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void {
+        this._logs.forEach(l => l.assert(message, resourceId, resourceName, expected, actual));
     }
     endTest(): void {
         this._logs.forEach(l => l.endTest());
@@ -239,6 +245,10 @@ export class MultiLog implements IAzuLog {
 
         return allResults;
     }
+
+    public trackResource(resourceId: string, resourceName: string): void {
+        this._logs.forEach(l => l.trackResource(resourceId, resourceName));
+    }
 }
 
 export class ResultsLog extends BaseLog {
@@ -256,6 +266,12 @@ export class ResultsLog extends BaseLog {
         console.log(message.toString(this._locale, ));
     }
 
+    public trackResource(resourceId: string, resourceName: string): void {
+        if (this._run) {
+            this._run.resources.push(new Results.AzuResourceResult(resourceId, resourceName, 0));
+        }
+    }
+
     protected openRun(name: string, subscription: string, start?: Date): void {
         this._run = new Results.AzuRunResult(name, subscription, start);
     }
@@ -268,13 +284,30 @@ export class ResultsLog extends BaseLog {
         this._test = new Results.AzuTestResult(name, start);
     }
     
-    protected writeAssert(message: AssertionMessage, expected: any, actual: any): void {
+    protected writeAssert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void {
 
         // Strip icons and don't augment tokens
         let iconFormatter = (i: string, t: MessageType) => { return ""; };
         let tokenFormatter = (t: string) => { return t; };
 
         let assertion = new Results.AzuAssertionResult(message.state, message.toString(this._locale, iconFormatter, tokenFormatter));
+
+        if (this._run) {
+            
+            let resource = null;
+
+            for (let i=0; i<this._run.resources.length; i++) {
+                let testResource = this._run.resources[i];
+                if (testResource && testResource.id == resourceId) {
+                    resource = testResource;
+                    break;
+                }
+            }
+
+            if (resource) {
+                resource.assertions++;
+            }
+        }
 
         if (this._test) {
             this._test.assertions.push(assertion);

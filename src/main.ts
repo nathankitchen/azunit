@@ -8,8 +8,6 @@ import { AzuState } from "./io/results";
 import * as Writers from "./io/writers";
 import vm from "vm";
 
-type AzuFileFunc = (subscription: IAzuTestContext) => Promise<IAzuTestContext>;
-
 type AzuFileLoaderFunc = (filename: string) => Promise<string>;
 
 interface IAzuApp {
@@ -44,11 +42,11 @@ class AzuApp implements IAzuApp {
                 this._services.log.write(Globalization.Resources.statusTenant(tenant));
 
                 this._services.authenticator.getSPTokenCredentials(tenant, clientId, secret)
-                .then((token) => {
-                    let run = new AzuPrincipal(this._services, token);
-                    resolve(run);
-                })
-                .catch((err) => { reject(err); });
+                    .then((token) => {
+                        let run = new AzuPrincipal(this._services, token);
+                        resolve(run);
+                    })
+                    .catch((err) => { reject(err); });
             }
         );
     }
@@ -76,20 +74,20 @@ class AzuPrincipal implements IAzuPrincipal {
         
             this._services.log.write(Globalization.Resources.statusSubscription(subscriptionId));
 
-            this._services.resourceProvider.list(subscriptionId, this._token)
+            this._services.resourceProvider
+                .list(subscriptionId, this._token)
+                .then((data: Array<any>) => {
+                    let resources = new Array<Tests.AzuResource>();
 
-            .then((data: Array<any>) => {
-                let resources = new Array<Tests.AzuResource>();
+                    data.forEach(r => {
+                        resources.push(new Tests.AzuResource(this._services, r)); 
+                    });
+                    
+                    let sub = new AzuSubscription(this._services, subscriptionId, resources);
 
-                data.forEach(r => {
-                    resources.push(new Tests.AzuResource(this._services, r));            
-                });
-                
-                let sub = new AzuSubscription(this._services, subscriptionId, resources);
-
-                resolve(sub);
-            })
-            .catch((err: Error) => { reject(err); });
+                    resolve(sub);
+                })
+                .catch((err: Error) => { reject(err); });
         });
         
     };
@@ -112,12 +110,13 @@ class AzuSubscription implements IAzuSubscription {
 
         this._services.log.startRun(name, this.subscriptionId);
 
-        let context = new AzuRunContext(this._services, this._resources);
-
-        return fileLoader(parameterFile).then((jsonParamString: string) => {
-            return JSON.parse(jsonParamString);
-        })
-        .then((p: any) => {
+        this._resources.forEach(resource => this._services.log.trackResource(resource.id, resource.name));
+    
+        return fileLoader(parameterFile)
+            .then((jsonParamString: string) => {
+                return JSON.parse(jsonParamString);
+            })
+            .then((p: any) => {
 
             let fileTestPromises = new Array<Promise<void>>();
 
@@ -137,14 +136,8 @@ class AzuSubscription implements IAzuSubscription {
                         title: function(title: string) {
                             sandboxTitle = title;
                         },
-                        test: function(name: string, callback: Client.AzuTestFunc) {
+                        start: function(name: string, callback: Client.AzuTestFunc) {
                             sandboxTests.push({ name: name, callback: callback });
-                        },
-                        log: {
-                            trace: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); },
-                            write: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); },
-                            warning: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); },
-                            error: (message: string) => { this._services.log.write(Globalization.Resources.clientTrace(message)); }
                         },
                         parameters: p
                     };
@@ -187,38 +180,13 @@ class AzuSubscription implements IAzuSubscription {
     
                     return success;
                 });
-    
-
         });
     }
 }
 
-export interface IAzuRunContext {
-    testJob(callback: AzuFileFunc): Promise<IAzuTestContext>;
-}
-
-class AzuRunContext implements IAzuRunContext {
-
-    constructor (services: IAzuServices, resources: Array<Tests.AzuResource>) {
-        this._services = services;
-        this._resources = resources;
-    }
-
-    private _services: IAzuServices;
-    private _resources: Array<Tests.AzuResource>;
-
-    testJob(callback: AzuFileFunc) : Promise<IAzuTestContext> {
-
-        let context = new AzuTestContext(this._services, this._resources);
-        let result = callback(context);
-
-        return result;
-    }
-}
-
 export interface IAzuTestContext {
-    log: Log.IAzuLog;
     test(name: string, callback: Client.AzuTestFunc): void;
+    ignore(name: string, reason: string, callback: Client.AzuTestFunc): void;
 }
 
 export class AzuTestContext implements IAzuTestContext {
@@ -226,10 +194,8 @@ export class AzuTestContext implements IAzuTestContext {
     constructor (services: IAzuServices, resources: Array<Tests.AzuResource>) {
         this._services = services;
         this._resources = resources;
-        this.log = services.log;
     }
 
-    public log: Log.IAzuLog;
     private _services: IAzuServices;
     private _resources: Array<Tests.AzuResource>;
 
@@ -241,6 +207,22 @@ export class AzuTestContext implements IAzuTestContext {
     */
     test(name: string, callback: Client.AzuTestFunc) {
 
+        this._services.log.startTest(name);
+
+        let test = new Tests.AzuTest(this._services, name, this._resources);
+
+        callback(test);
+
+        this._services.log.endTest();
+    }
+
+    /**
+    * Performs a series of tests to verify the validity of resources.
+    * @param name The name of the test.
+    * @param callback A function responsible for running the tests.
+    * @returns The subscription, allowing test chaining.
+    */
+   ignore(name: string, reason: string, callback: Client.AzuTestFunc) {
         this._services.log.startTest(name);
 
         let test = new Tests.AzuTest(this._services, name, this._resources);

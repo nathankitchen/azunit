@@ -7,17 +7,29 @@ export interface IAzuValue {
     as(name: string): IAzuValue;
 }
 
+export interface IAzuClientLog {
+    trace(message: string) : void;
+    write(message: string) : void;
+    warning(message: string) : void;
+    error(message: string) : void;
+}
+
 export interface IAzuTest {
-    selectByProvider(provider: string): IAzuTestable;
-    selectByName(name: string): IAzuTestable;
+    title: string;
+    description: string;
+    ignore: boolean;
+    readonly categories: Array<string>;
+
+    selectResourcesByProvider(provider: string): IAzuTestable;
+    selectResourcesByName(name: string): IAzuTestable;
+
+    readonly log: IAzuClientLog;
 }
 
 export interface IAzuTestable {
-    approve(message?: string): void;
-    isApproved(): boolean;
     shouldHaveInstanceCount: IAzuValue;
     shouldHaveProperty(selector: string): IAzuValue;
 }
 
 export function title(name: string,) {};
-export function test(name: string, callback: AzuTestFunc) {};
+export function start(name: string, callback: AzuTestFunc) {};

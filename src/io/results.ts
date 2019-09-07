@@ -4,9 +4,31 @@
  * to be skipped.
  */
 export enum AzuState {
+
+    /* The test was ignored. */
     Ignored,
+
+    /* The test evaluated as a success. */
     Passed,
+
+    /* The test evaluated as failure. */
     Failed
+}
+
+/* Defines states of test execution. */
+export enum AzuExecution {
+
+    /* Execution completed successfully. */
+    Complete,
+    
+    /* Execution failed due to an error being thrown. */
+    Error,
+
+    /* Test execution timed out. */
+    Timeout,
+
+    /* Test script was invalid. */
+    Invalid,
 }
 
 /**
@@ -25,6 +47,7 @@ export interface IAzuTestResult extends IAzuRunEvaluator {
     name: string;
     readonly start: Date;
     duration: number;
+    execution: AzuExecution;
     assertions: Array<IAzuAssertionResult>;
 }
 
@@ -36,12 +59,19 @@ export interface IAzuGroupResult extends IAzuRunEvaluator {
     tests: Array<IAzuTestResult>;
 }
 
+export interface IAzuResourceResult {
+    readonly id: string;
+    readonly name: string;
+    assertions: number;
+}
+
 export interface IAzuRunResult extends IAzuRunEvaluator {
-    name: string;
-    subscription: string;
+    readonly name: string;
+    readonly subscription: string;
     readonly start: Date;
     duration: number;
-    groups: Array<IAzuGroupResult>;
+    readonly groups: Array<IAzuGroupResult>;
+    readonly resources: Array<IAzuResourceResult>;
 }
 
 export abstract class AzuBaseEvaluator implements IAzuRunEvaluator {
@@ -85,6 +115,7 @@ export class AzuRunResult extends AzuBaseEvaluator implements IAzuRunResult {
     public readonly subscription: string;
     public readonly start: Date;
     public readonly groups: Array<IAzuGroupResult> = new Array<IAzuGroupResult>();
+    public readonly resources: Array<IAzuResourceResult> = new Array<IAzuResourceResult>();
     public duration: number = 0;
 
     getState() : AzuState { return this.evalState(this.groups); }
@@ -120,6 +151,7 @@ export class AzuTestResult extends AzuBaseEvaluator implements IAzuTestResult {
     public readonly start: Date;
     public readonly assertions: Array<IAzuAssertionResult> = new Array<IAzuAssertionResult>();
     public duration: number = 0;
+    public execution: AzuExecution = AzuExecution.Complete;
 
     getState() : AzuState { return this.evalState(this.assertions); }
 }
@@ -137,4 +169,17 @@ export class AzuAssertionResult extends AzuBaseEvaluator implements IAzuAssertio
     private _state: AzuState;
     
     getState() : AzuState { return this._state; }
+}
+
+export class AzuResourceResult {
+    
+    constructor(id: string, name: string, assertions: number) {
+        this.id = id;
+        this.name = name;
+        this.assertions = assertions;
+    }
+
+    public readonly id: string;
+    public readonly name: string;
+    public assertions: number = 0;
 }

@@ -1,15 +1,13 @@
 title("Quickstart 101");
 
-test("Search Service", (resources) => {
+start("Search Service", (test) => {
 
-    //log.trace();
-    //context.log.write(parameters.nathan);
-    //context.category("");
-    //context.describe("");
-    //log.warning(parameters.one);
-    //log.error(parameters.one);
+    test.title = "";
+    test.description = "";
+    test.categories.push("");
+    test.ignore = true;
 
-    var search = resources.selectByName("cloudskus");
+    var search = test.selectResourcesByName("cloudskus");
 
     search.shouldHaveInstanceCount.equals(1);
 
@@ -18,11 +16,32 @@ test("Search Service", (resources) => {
     search.shouldHaveProperty("$.location").as("Location").equals("West Europe");
     search.shouldHaveProperty("$.sku.name").as("Service Tier").equals("basic");
 
-    var storage = resources.selectByName("commands");
+    var storage = test.selectResourcesByName("commands");
     storage.shouldHaveInstanceCount.equals(0);
 
     storage.shouldHaveProperty("$.properties.encryption.services.file.enabled").as("File encryption").disabled();
 });
 
-// ignore();
+start("Search Service2", (test) => {
+
+    test.title = "";
+    test.description = "";
+    test.categories.push("");
+    test.ignore = true;
+
+    var search = test.selectResourcesByName("cloudskus");
+
+    search.shouldHaveInstanceCount.equals(1);
+
+    // Test ARM properties using JsonPath in a fluent API. Each assertion
+    // is run against the selected resource(s).
+    search.shouldHaveProperty("$.location").as("Location").equals("West Europe");
+    search.shouldHaveProperty("$.sku.name").as("Service Tier").equals("basic");
+
+    var storage = test.selectResourcesByName("commands");
+    storage.shouldHaveInstanceCount.equals(0);
+
+    storage.shouldHaveProperty("$.properties.encryption.services.file.enabled").as("File encryption").disabled();
+});
+
 // run("./test/second.js", "WHAT?", { ps: 1 } );
