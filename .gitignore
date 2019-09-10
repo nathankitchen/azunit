@@ -23,8 +23,8 @@ node_modules/
 /dist
 
 # Ignore my test outputs
-output/*
+.azunit
+.nyc_output
 
 # Test harness
-src/units.js
 run.sh

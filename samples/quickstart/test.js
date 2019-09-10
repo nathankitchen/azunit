@@ -7,6 +7,8 @@ start("Search Service", (test) => {
     test.categories.push("");
     test.ignore = true;
 
+    test.log.write(parameters.nathan);
+
     var search = test.selectResourcesByName("cloudskus");
 
     search.shouldHaveInstanceCount.equals(1);

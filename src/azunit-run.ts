@@ -13,7 +13,7 @@ program
     .option('-c, --run-culture [culture]', 'Culture/language code for the run (defaults to en-GB)', langRegex, 'en-GB')
     .option('-n, --run-name [name]', 'A name for the test run', undefined, 'Test run ' + new Date(Date.now()).toLocaleString())
     .option("-x, --silent", "Don't output test results to the command line")
-    .option("-p, --parameter-file [path]", "Don't output test results to the command line")
+    .option("-p, --parameters [path]", "A file containing JSON data passed to the test runs")
     .option('-X, --output-xml [path]', 'Name of the file to output results to in XML format')
     .option('-J, --output-json [path]', 'Name of the file to output results to in JSON format')
     .option('-H, --output-html [path]', 'Name of the file to output results to in HTML format')
@@ -52,7 +52,7 @@ app.useServicePrincipal(program.tenant, program.appId, program.appKey)
                     });
                 });};
 
-                subscription.createTestRun(program.runName, filenames, program.parameterFile, fileLoader)
+                subscription.createTestRun(program.runName, filenames, program.parameters, fileLoader)
                 .then((success) => {
                     process.exitCode = (success) ? 0 : 1;
                 })
