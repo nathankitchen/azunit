@@ -47,7 +47,12 @@ start("Search Service", (test) => {
     search.shouldHaveProperty("$.location").as("Location").equals("West Europe");
     search.shouldHaveProperty("$.sku.name").as("Service Tier").equals("basic");
 
-    var storage = resources.selectResourcesByName("nk1b1234a2d3401x46fee9aa");
+    test.log.trace("An example trace message");
+    test.log.write("An example log message");
+    test.log.warning("An example warning message");
+    test.log.error("An example error message");
+
+    var storage = test.selectResourcesByName("nk1b1234a2d3401x46fee9aa");
     storage.shouldHaveProperty("$.properties.encryption.services.file.enabled").as("File encryption").disabled();
 });
 ```
