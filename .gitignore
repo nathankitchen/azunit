@@ -28,3 +28,4 @@ node_modules/
 
 # Test harness
 run.sh
+.DS_Store
