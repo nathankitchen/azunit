@@ -84,7 +84,7 @@ azunit run ./test1.js ./test2.js [parameters]
 |----------------|-------|--------------------------------------------------------------------------|-----------------|
 | --tenant       | -t    | String. The domain name of the tenant, often ends in ".onmicrosoft.com". | None            |
 | --app-id       | -a    | GUID. The service principal with access to the target subscription.      | None            |
-| --key          | -k    | String. The secret for the service principal.                            | None            |
+| --app-key      | -k    | String. The secret for the service principal.                            | None            |
 | --subscription | -s    | GUID. The ID of the subscription containing resources to tests.          | None            |
 | --run-culture  | -c    | Language code. Culture/language code for messages in the run. *          | en-GB           |
 | --run-name     | -n    | String. A name for the test run.                                         | *Current date*  |
@@ -96,7 +96,7 @@ azunit run ./test1.js ./test2.js [parameters]
 | --output-md    | -M    | String. A filename to output the results of the run in Markdown format.  | *Based on date* |
 | --output-csv   | -C    | String. A filename to output the results of the run in CSV format.       | *Based on date* |
 
-&ast; *Run culture is currently ignored as the output only runs in a single culture: enGb *
+&ast; *Run culture is currently ignored as the output only runs in a single culture: enGb*
 
 To use parameters, create a file containing a JSON data structure that you want to make available to your tests. For example, create `env-test.params.json` containing:
 
