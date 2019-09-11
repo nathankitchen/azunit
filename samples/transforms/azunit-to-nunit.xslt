@@ -11,8 +11,8 @@
             <xsl:element name="test-suite">
                 <xsl:attribute name="type">Assembly</xsl:attribute>
                 <xsl:attribute name="id"><xsl:value-of select="concat(generate-id(.),'-sub')"/></xsl:attribute>
-                <xsl:attribute name="name"><xsl:value-of select="AzUnit"/></xsl:attribute>
-                <xsl:attribute name="fullname"><xsl:value-of select="AzUnit"/></xsl:attribute>
+                <xsl:attribute name="name">AzUnit</xsl:attribute>
+                <xsl:attribute name="fullname">AzUnit</xsl:attribute>
                 <xsl:attribute name="testcasecount"><xsl:value-of select="count(//test)"/></xsl:attribute>
                 <xsl:attribute name="result"><xsl:value-of select="@result"/></xsl:attribute>
                 <xsl:attribute name="time"><xsl:value-of select="@duration"/></xsl:attribute>
