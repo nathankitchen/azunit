@@ -4,27 +4,55 @@
   <xsl:output method="xml" version="1.0" encoding="utf-8" omit-xml-declaration="no" indent="yes" cdata-section-elements="message stacktrace" />
 
   <xsl:template match="azunit">
-    <test-results name="{@name}" total="{count(//test)}" errors="{count(//test[@result='Failed'])}" failures="0" not-run="{count(//test[@result='Ignored'])}" inconclusive="0" ignored="0" skipped="0" invalid="0" date="{ms:format-date(@startTime, '[Y0001]-[M01]-[D01]')}" time="{ms:format-time(@startTime,'[h01]:[m01]:[s01]')}">
+    <test-run id="2" name="{@name}" testcasecount="{count(//test)}" time="{@duration}" total="{count(//test)}" errors="{count(//test[@result='Failed'])}" failures="0" not-run="{count(//test[@result='Ignored'])}" inconclusive="0" ignored="0" skipped="0" invalid="0" run-date="{ms:format-date(@startTime, 'yyyy-MM-dd')}" start-time="{ms:format-time(@startTime,'hh:mm:ss')}">
 
-        <environment nunit-version="2.6.0.12035" clr-version="2.0.50727.4963" os-version="Microsoft Windows NT 6.1.7600.0" platform="Win32NT" cwd="C:\Program Files\NUnit 2.6\bin" machine-name="CHARLIE-LAPTOP" user="charlie" user-domain="charlie-laptop"/>
-        <culture-info current-culture="en-GB" current-uiculture="en-GB"/>
+        <environment framework-version="2.6.0.12035" clr-version="2.0.50727.4963" os-version="Microsoft Windows NT 6.1.7600.0" platform="Win32NT" cwd="C:\Program Files\NUnit 2.6\bin" machine-name="CHARLIE-LAPTOP" user="charlie" user-domain="charlie-laptop" culture="en-GB" uiculture="en-GB" />
         
-        <xsl:apply-templates />
+        <xsl:element name="test-suite">
+            <xsl:attribute name="type">Assembly</xsl:attribute>
+            <xsl:attribute name="name">AzUnit</xsl:attribute>
+            <xsl:attribute name="fullname">Some path</xsl:attribute>
+            <xsl:attribute name="testcasecount"><xsl:value-of select="count(//test)"/></xsl:attribute>
+            <xsl:attribute name="result"><xsl:value-of select="@result"/></xsl:attribute>
+            <xsl:attribute name="time"><xsl:value-of select="@duration"/></xsl:attribute>
+            <xsl:attribute name="total"><xsl:value-of select="count(//test)"/></xsl:attribute>
+            <xsl:attribute name="passed"><xsl:value-of select="count(//test[@result='Passed'])"/></xsl:attribute>
+            <xsl:attribute name="failed"><xsl:value-of select="count(//test[@result='Failed'])"/></xsl:attribute>
+            <xsl:attribute name="inconclusive">0</xsl:attribute>
+            <xsl:attribute name="skipped">0</xsl:attribute>
+            <xsl:attribute name="asserts"><xsl:value-of select="count(//assertion)"/></xsl:attribute>
 
-    </test-results>
+            <xsl:apply-templates />
+
+        </xsl:element>
+
+    </test-run>
   </xsl:template>
 
   <xsl:template match="group">
+    <xsl:element name="test-suite">
+        <xsl:attribute name="type">TestFixture</xsl:attribute>
+        <xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
+        <xsl:attribute name="fullname"><xsl:value-of select="@source"/></xsl:attribute>
+        <xsl:attribute name="testcasecount"><xsl:value-of select="count(//test)"/></xsl:attribute>
+        <xsl:attribute name="result"><xsl:value-of select="@result"/></xsl:attribute>
+        <xsl:attribute name="time"><xsl:value-of select="@duration"/></xsl:attribute>
+        <xsl:attribute name="total"><xsl:value-of select="count(//test)"/></xsl:attribute>
+        <xsl:attribute name="passed"><xsl:value-of select="count(//test[@result='Passed'])"/></xsl:attribute>
+        <xsl:attribute name="failed"><xsl:value-of select="count(//test[@result='Failed'])"/></xsl:attribute>
+        <xsl:attribute name="inconclusive">0</xsl:attribute>
+        <xsl:attribute name="skipped">0</xsl:attribute>
+        <xsl:attribute name="asserts"><xsl:value-of select="count(//assertion)"/></xsl:attribute>
 
-    <test-suite type="Assembly" name="{@name}" fullname="{@source}" executed="True" result="Failure" success="False" time="{@duration}" asserts="{count(//assertion)}">
-      <results>
         <xsl:apply-templates />
-      </results>
-    </test-suite>
+
+
+    </xsl:element>
+
   </xsl:template>
 
  <xsl:template match="test[@result='Failed']">
-    <test-case name="{@name}" description="{@description}" executed="True" result="{@result}" success="False" time="{@duration}" asserts="{count(assertion)}">
+    <test-case name="{@name}" description="{@description}" executed="True" result="{@result}" time="{@duration}" asserts="{count(assertion)}">
       <failure>
         <message>
             <xsl:for-each select="assertion[@result='Failed']">
@@ -43,9 +71,7 @@
   </xsl:template>
   
    <xsl:template match="test[@result='Passed']">
-    <test-case name="{@name}" description="{@description}" executed="True" result="{@result}" success="False" time="{@duration}" asserts="{count(assertion)}">
-
-    </test-case>
+    <test-case name="{@name}" description="{@description}" executed="True" result="{@result}" time="{@duration}" asserts="{count(assertion)}" />
   </xsl:template>
 
   <xsl:template match="coverage">
