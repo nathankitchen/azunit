@@ -71,8 +71,13 @@ export class XmlAzuResultsWriter extends AzuResultsWriter {
             .startElement('azunit')
             .writeAttribute('name', run.name)
             .writeAttribute('subscription', run.subscription)
-            .writeAttribute('startTime', run.start.toISOString())
-            .writeAttribute('duration', run.duration)
+            .writeAttribute('start', run.start.toISOString());
+
+        if (run.end) {
+            xw.writeAttribute('end', run.end.toISOString());
+        }
+
+        xw.writeAttribute('duration', run.getDurationSeconds())
             .writeAttribute('result', this.resultToText(run.getState()));
         
         xw.startElement("results");
@@ -82,18 +87,28 @@ export class XmlAzuResultsWriter extends AzuResultsWriter {
             xw.startElement('group')
                 .writeAttribute('name', group.name)    
                 .writeAttribute('source', group.source)
-                .writeAttribute('startTime', group.start.toISOString())
-                .writeAttribute('duration', group.duration)
+                .writeAttribute('start', group.start.toISOString());
+
+            if (group.end) {
+                xw.writeAttribute('end', group.end.toISOString());
+            }
+
+            xw.writeAttribute('duration', group.getDurationSeconds())
                 .writeAttribute('result', this.resultToText(group.getState()));
 
             group.tests.forEach(test => {
 
                 xw.startElement('test')
                     .writeAttribute('name', test.name)
-                    .writeAttribute('startTime', test.start.toISOString())
-                    .writeAttribute('duration', test.duration)
-                    .writeAttribute('result', this.resultToText(test.getState()));
+                    .writeAttribute('start', test.start.toISOString());
 
+                if (test.end) {
+                    xw.writeAttribute('end', test.end.toISOString());
+                }
+
+                xw.writeAttribute('duration', test.getDurationSeconds())
+                    .writeAttribute('result', this.resultToText(test.getState()));
+                
                 test.assertions.forEach(assertion => {
 
                     xw.startElement('assertion')
@@ -152,7 +167,7 @@ export class JsonAzuResultsWriter extends AzuResultsWriter {
         let doc = {
             title: run.name,
             start: run.start,
-            duration: run.duration,
+            duration: run.getDurationSeconds(),
             subscription: run.subscription,
             result: this.resultToText(run.getState()),
             groups: new Array()
@@ -164,7 +179,7 @@ export class JsonAzuResultsWriter extends AzuResultsWriter {
                 name: group.name,
                 source: group.source,
                 start: group.start,
-                duration: group.duration,
+                duration: group.getDurationSeconds(),
                 result: this.resultToText(group.getState()),
                 tests: new Array()
             };
@@ -174,7 +189,7 @@ export class JsonAzuResultsWriter extends AzuResultsWriter {
                 let testDoc = {
                     name: test.name,
                     start: test.start,
-                    duration: test.duration,
+                    duration: test.getDurationSeconds(),
                     result: this.resultToText(test.getState()),
                     assertions: new Array()
                 };
@@ -225,7 +240,7 @@ export class HtmlAzuResultsWriter extends AzuResultsWriter {
             .startElement("h1").text(run.name).endElement()
             .startElement("span").text(run.subscription).endElement();
 
-        this.writeHeaderInfo(xw, run.start, run.duration);
+        this.writeHeaderInfo(xw, run.start, run.getDurationSeconds());
 
         xw.endElement();
 
@@ -235,7 +250,7 @@ export class HtmlAzuResultsWriter extends AzuResultsWriter {
             xw.startElement("header").writeAttribute("class", this.resultToText(group.getState(), true));
             xw.startElement("h2").text(group.name).endElement();
 
-            this.writeHeaderInfo(xw, group.start, group.duration);
+            this.writeHeaderInfo(xw, group.start, group.getDurationSeconds());
 
             xw.endElement(); // header
             xw.startElement("section");
@@ -244,7 +259,7 @@ export class HtmlAzuResultsWriter extends AzuResultsWriter {
 
                 xw.startElement("div").writeAttribute("class", this.resultToText(test.getState(), true));
                 xw.startElement('h3').text(test.name).endElement();
-                this.writeHeaderInfo(xw, test.start, test.duration);
+                this.writeHeaderInfo(xw, test.start, test.getDurationSeconds());
                 xw.startElement("ol");
 
                 test.assertions.forEach(assertion => {
@@ -292,7 +307,7 @@ export class MarkdownAzuResultsWriter extends AzuResultsWriter {
         var ws = fs.createWriteStream(this.filename);
 
         ws.write("# " + run.name + "\r\n");
-        ws.write("Test completed in " + run.duration + " on " + run.start + ".\r\n");
+        ws.write("Test completed in " + run.getDurationSeconds() + " on " + run.start + ".\r\n");
         ws.write("\r\n");
 
         run.groups.forEach(group => {

@@ -28,7 +28,7 @@ export enum AzuExecution {
     Timeout,
 
     /* Test script was invalid. */
-    Invalid,
+    Invalid
 }
 
 /**
@@ -36,6 +36,9 @@ export enum AzuExecution {
  * success at the assertion, test, file, and run levels.
  */
 export interface IAzuRunEvaluator {
+    readonly start: Date;
+    end?: Date;
+    getDurationSeconds() : number;
     getState() : AzuState;
 }
 
@@ -45,18 +48,17 @@ export interface IAzuAssertionResult extends IAzuRunEvaluator {
 
 export interface IAzuTestResult extends IAzuRunEvaluator {
     name: string;
-    readonly start: Date;
-    duration: number;
     execution: AzuExecution;
     assertions: Array<IAzuAssertionResult>;
 }
 
 export interface IAzuGroupResult extends IAzuRunEvaluator {
     name: string;
-    readonly start: Date;
-    duration: number;
     source: string;
     tests: Array<IAzuTestResult>;
+    getTestCount(): number;
+    getTestFailureCount(): number;
+    getTestPassCount(): number;
 }
 
 export interface IAzuResourceResult {
@@ -68,33 +70,48 @@ export interface IAzuResourceResult {
 export interface IAzuRunResult extends IAzuRunEvaluator {
     readonly name: string;
     readonly subscription: string;
-    readonly start: Date;
-    duration: number;
     readonly groups: Array<IAzuGroupResult>;
     readonly resources: Array<IAzuResourceResult>;
+    getTestCount(): number;
+    getTestFailureCount(): number;
+    getTestPassCount(): number;
 }
 
 export abstract class AzuBaseEvaluator implements IAzuRunEvaluator {
+    
+    constructor(start?: Date){
+        this.start = (start) ? start : new Date();
+    }
+
+    public readonly start: Date;
+    public end?: Date;
+
+    public getDurationSeconds(): number {
+        if (this.end) {
+            return (this.end.getTime() - this.start.getTime()) / 1000;
+        }
+
+        return 0;
+    }
+
     abstract getState(): AzuState;
 
     protected evalState(set: Array<IAzuRunEvaluator>) {
         let state = AzuState.Ignored;
 
-        if (set) {
-            for (let i=0; i<set.length; i++) {
+        for (let i=0; i<set.length; i++) {
 
-                // If any of the children have failed, then the
-                // aggregate item has failed too.
-                if (set[i].getState() == AzuState.Failed) {
-                    state = AzuState.Failed;
-                    break;
-                }
+            // If any of the children have failed, then the
+            // aggregate item has failed too.
+            if (set[i].getState() == AzuState.Failed) {
+                state = AzuState.Failed;
+                break;
+            }
 
-                // If any of the children have passed, then the
-                // aggregate item is not ignored.
-                else if (set[i].getState() == AzuState.Passed) {
-                    state = AzuState.Passed;
-                }
+            // If any of the children have passed, then the
+            // aggregate item is not ignored.
+            else if (set[i].getState() == AzuState.Passed) {
+                state = AzuState.Passed;
             }
         }
 
@@ -105,52 +122,51 @@ export abstract class AzuBaseEvaluator implements IAzuRunEvaluator {
 export class AzuRunResult extends AzuBaseEvaluator implements IAzuRunResult {
 
     constructor(name: string, subscription: string, start?: Date) {
-        super();
+        super(start);
         this.name = name;
         this.subscription = subscription;
-        this.start = (start) ? start : new Date();
     }
 
     public readonly name: string;
     public readonly subscription: string;
-    public readonly start: Date;
     public readonly groups: Array<IAzuGroupResult> = new Array<IAzuGroupResult>();
     public readonly resources: Array<IAzuResourceResult> = new Array<IAzuResourceResult>();
-    public duration: number = 0;
 
-    getState() : AzuState { return this.evalState(this.groups); }
+    public getState() : AzuState { return this.evalState(this.groups); }
+
+    public getTestCount(): number { return this.groups.reduce( (a,b) => { return a+b.getTestCount(); }, 0); }
+    public getTestFailureCount(): number  { return this.groups.reduce( (a,b) => { return a+b.getTestFailureCount(); }, 0); }
+    public getTestPassCount(): number  { return this.groups.reduce( (a,b) => { return a+b.getTestPassCount(); }, 0); }
 }
 
 export class AzuGroupResult extends AzuBaseEvaluator implements IAzuGroupResult {
     
     constructor(name: string, source: string, start?: Date) {
-        super();
+        super(start);
         this.name = name;
         this.source = source;
-        this.start = (start) ? start : new Date();
     }
 
     public readonly name: string;
     public readonly source: string;
-    public readonly start: Date;
     public readonly tests: Array<IAzuTestResult> = new Array<IAzuTestResult>();
-    public duration: number = 0;
 
     getState() : AzuState { return this.evalState(this.tests); }
+
+    public getTestCount(): number { return this.tests.length; }
+    public getTestFailureCount(): number  { return this.tests.filter((i) => { return i.getState() == AzuState.Failed; }).length; }
+    public getTestPassCount(): number  { return this.tests.filter((i) => { return i.getState() == AzuState.Passed; }).length; }
 }
 
 export class AzuTestResult extends AzuBaseEvaluator implements IAzuTestResult {
 
     constructor(name: string, start?: Date) {
-        super();
+        super(start);
         this.name = name;
-        this.start = (start) ? start : new Date();
     }
 
     public readonly name: string;
-    public readonly start: Date;
     public readonly assertions: Array<IAzuAssertionResult> = new Array<IAzuAssertionResult>();
-    public duration: number = 0;
     public execution: AzuExecution = AzuExecution.Complete;
 
     getState() : AzuState { return this.evalState(this.assertions); }

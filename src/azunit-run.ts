@@ -47,9 +47,15 @@ app.useServicePrincipal(program.tenant, program.appId, program.appKey)
             .then((subscription) => {
 
                 let fileLoader = (filename: string) => { return new Promise<string>((resolve, reject) => {
-                    fs.readFile(filename, 'utf8', function (err, data) {
-                        resolve(data);
-                    });
+                    if (filename) {
+                        fs.readFile(filename, 'utf8', function (err, data) {
+                            if (err) { reject(err); }
+                            resolve(data);
+                        });
+                    }
+                    else {
+                        resolve("");
+                    }
                 });};
 
                 subscription.createTestRun(program.runName, filenames, program.parameters, fileLoader)

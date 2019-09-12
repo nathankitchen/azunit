@@ -112,11 +112,23 @@ class AzuSubscription implements IAzuSubscription {
 
         this._resources.forEach(resource => this._services.log.trackResource(resource.id, resource.name));
     
-        return fileLoader(parameterFile)
-            .then((jsonParamString: string) => {
-                return JSON.parse(jsonParamString);
-            })
-            .then((p: any) => {
+        let parameterLoader = new Promise<string>((resolve, reject) => { resolve(""); });
+
+        // If there's a parameter file, attempt to load it.
+        if (parameterFile) {
+            parameterLoader = fileLoader(parameterFile)
+                .then((jsonParamString: string) => {
+                    try {
+                        if (jsonParamString) {
+                            return JSON.parse(jsonParamString);
+                        }
+                    }
+                    catch {}
+                    return null;
+                });
+        } 
+
+        return parameterLoader.then((p: any) => {
 
             let fileTestPromises = new Array<Promise<void>>();
 
@@ -162,18 +174,25 @@ class AzuSubscription implements IAzuSubscription {
                     let success = true;
                     let results = this._services.log.endRun();
     
+                    let totalTests = 0;
+                    let totalFailures = 0;
+                    let totalTime = 0;
+
                     results.forEach(result => {
                         if (result) {
                             success = (success && (result.getState() != AzuState.Failed));
                             this._services.resultsWriter.write(result);
+                            totalTests += result.getTestCount();
+                            totalFailures += result.getTestFailureCount();
+                            totalTime += result.getDurationSeconds();
                         }
                     });
     
                     if (!success) {
-                        this._services.log.write(Globalization.Resources.endRunFailed(10, 2, 0.1));
+                        this._services.log.write(Globalization.Resources.endRunFailed(totalTests, totalFailures, totalTime));
                     }
                     else {
-                        this._services.log.write(Globalization.Resources.endRunPassed(10, 0.1));
+                        this._services.log.write(Globalization.Resources.endRunPassed(totalTests, totalTime));
                     }
     
                     this._services.log.write(Globalization.Resources.completed());
@@ -211,8 +230,13 @@ export class AzuTestContext implements IAzuTestContext {
 
         let test = new Tests.AzuTest(this._services, name, this._resources);
 
-        callback(test);
+        try {
+            callback(test);
+        }
+        catch (e) {
 
+        }
+        
         this._services.log.endTest();
     }
 

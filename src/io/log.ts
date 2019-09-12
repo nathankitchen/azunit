@@ -316,8 +316,7 @@ export class ResultsLog extends BaseLog {
 
     protected closeTest(): void {
         if (this._group && this._test) {
-            let end = new Date();
-            this._test.duration = (end.getTime() - this._test.start.getTime()) / 1000;
+            this._test.end = new Date();
             this._group.tests.push(this._test);
             this._test = null;
         }
@@ -325,8 +324,7 @@ export class ResultsLog extends BaseLog {
 
     protected closeGroup(): void {
         if (this._run && this._group) {
-            let end = new Date();
-            this._group.duration = (end.getTime() - this._group.start.getTime()) / 1000;
+            this._group.end = new Date();
             this._run.groups.push(this._group);
             this._group = null;
         }
@@ -334,9 +332,7 @@ export class ResultsLog extends BaseLog {
     
     protected closeRun(): Array<Results.IAzuRunResult> {
         if (this._run) {
-            let end = new Date();
-            this._run.duration = (end.getTime() - this._run.start.getTime()) / 1000;
-
+            this._run.end = new Date();
             let results = new Array<Results.IAzuRunResult>();
             results.push(this._run);
             return results;
