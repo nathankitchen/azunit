@@ -108,7 +108,16 @@ abstract class BaseLog implements IAzuLog {
     protected abstract closeRun(): Array<Results.IAzuRunResult>;
 }
 
+export type ConsoleLogFunc = (text: string) => void;
+
 export class ConsoleLog extends BaseLog {
+
+    constructor(locale: Globalization.IAzuLocale, log: ConsoleLogFunc) {
+        super(locale);
+        this._log = log;
+    }
+
+    private _log: ConsoleLogFunc;
 
     write(message: Globalization.IAzuCultureMessage) {
         
@@ -135,33 +144,33 @@ export class ConsoleLog extends BaseLog {
         // Errors need to print out red.
         if (message.type == MessageType.Error) {
             let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
-            console.log("\x1b[31m" + text + "\x1b[0m");
+            this._log("\x1b[31m" + text + "\x1b[0m");
         }
         else if (message.type == MessageType.Title) {
             let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
-            console.log("\x1b[37m\x1b[4m\x1b[1m" + text + "\x1b[0m");
+            this._log("\x1b[37m\x1b[4m\x1b[1m" + text + "\x1b[0m");
         }
         else if (message.type == MessageType.Heading) {
             let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
-            console.log("\x1b[34m" + text + "\x1b[0m");
+            this._log("\x1b[34m" + text + "\x1b[0m");
         }
         else if (message.type == MessageType.Failure && !message.icon) {
             let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize(), "", "\x1b[31m");
-            console.log("\x1b[31m" + text + "\x1b[0m");
+            this._log("\x1b[31m" + text + "\x1b[0m");
         }
         else if (message.type == MessageType.Success && !message.icon) {
             let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize(), "", "\x1b[32m");
-            console.log("\x1b[32m" + text + "\x1b[0m");
+            this._log("\x1b[32m" + text + "\x1b[0m");
         }
         else {
             let text = message.toString(this._locale, iconFormatter, tokenFormatter, this.getStackSize());
-            console.log(text);
+            this._log(text);
         }
     }
 
     error(err: Error) {
         let message = Globalization.Resources.fatalError(err);
-        console.log(message.toString(this._locale, ));
+        this._log(message.toString(this._locale, ));
     }
 
     protected openRun(name: string, subscription: string): void {

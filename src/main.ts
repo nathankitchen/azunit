@@ -299,7 +299,7 @@ export function createTestRunner(settings: AzuRunSettings) {
     let resultsWriters = new Array<Writers.IAzuResultsWriter>();
 
     logs.push(new Log.ResultsLog(culture));
-    if (!settings.silentMode) { logs.push(new Log.ConsoleLog(culture)); }
+    if (!settings.silentMode) { logs.push(new Log.ConsoleLog(culture, (text: string) => { console.log(text); })); }
 
     if (settings.outputXmlPath) { resultsWriters.push(new Writers.XmlAzuResultsWriter(settings.outputXmlPath)); }
     if (settings.outputJsonPath) { resultsWriters.push(new Writers.JsonAzuResultsWriter(settings.outputJsonPath)); }
