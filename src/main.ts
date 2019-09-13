@@ -1,5 +1,6 @@
 import * as Abstractions from "./azure/abstractions";
-import * as Globalization from "./i18n/locales";
+import * as Globalization from "./azunit.globalization";
+import * as Messages from "./azunit.globalization.messages";
 import * as Log from "./io/log";
 import * as Client from "./unit/client";
 import * as Tests from "./unit/tests";
@@ -28,7 +29,7 @@ class AzuApp implements IAzuApp {
 
     constructor(services: IAzuServices) {
         this._services = services;
-        this._services.log.write(Globalization.Resources.title(Package.version));
+        this._services.log.write(Messages.Resources.title(Package.version));
     }
 
     private _services: IAzuServices;
@@ -39,7 +40,7 @@ class AzuApp implements IAzuApp {
 
             (resolve, reject) => {
 
-                this._services.log.write(Globalization.Resources.statusTenant(tenant));
+                this._services.log.write(Messages.Resources.statusTenant(tenant));
 
                 this._services.authenticator.getSPTokenCredentials(tenant, clientId, secret)
                     .then((token) => {
@@ -72,7 +73,7 @@ class AzuPrincipal implements IAzuPrincipal {
 
         return new Promise<IAzuSubscription>((resolve, reject) => {
         
-            this._services.log.write(Globalization.Resources.statusSubscription(subscriptionId));
+            this._services.log.write(Messages.Resources.statusSubscription(subscriptionId));
 
             this._services.resourceProvider
                 .list(subscriptionId, this._token)
@@ -189,13 +190,13 @@ class AzuSubscription implements IAzuSubscription {
                     });
     
                     if (!success) {
-                        this._services.log.write(Globalization.Resources.endRunFailed(totalTests, totalFailures, totalTime));
+                        this._services.log.write(Messages.Resources.endRunFailed(totalTests, totalFailures, totalTime));
                     }
                     else {
-                        this._services.log.write(Globalization.Resources.endRunPassed(totalTests, totalTime));
+                        this._services.log.write(Messages.Resources.endRunPassed(totalTests, totalTime));
                     }
     
-                    this._services.log.write(Globalization.Resources.completed());
+                    this._services.log.write(Messages.Resources.completed());
     
                     return success;
                 });
@@ -268,7 +269,7 @@ export interface IAzuServices {
 
 export class AzuServices implements IAzuServices {
     constructor() {
-        this.log = new Log.ConsoleLog(Globalization.Culture.enGb());
+        this.log = new Log.ConsoleLog(Globalization.Culture.enGb(), (text: string) => { console.log(text); });
         this.authenticator = new Abstractions.AzureAuthenticator();
         this.resourceProvider = new Abstractions.AzureResourceProvider();
         this.resultsWriter = new Writers.HtmlAzuResultsWriter("output/x.html");

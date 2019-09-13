@@ -1,4 +1,4 @@
-import { IAzuLocale } from "./locale";
+import { IAzuLocale } from "./IAzuLocale"; 
 
 export class AzuLocaleEnGb implements IAzuLocale {
 

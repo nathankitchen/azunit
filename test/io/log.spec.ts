@@ -2,10 +2,10 @@ import "mocha";
 import assert = require("assert");
 import * as Log from "../../src/io/log";
 
-import * as Globalization from "../../src/i18n/locales";
+import * as Globalization from "../../src/azunit.globalization";
 import * as Results from "../../src/io/results";
-import { MessageType, AssertionMessage } from "../../src/i18n/messages";
-import { AzuLocaleTest } from "../i18n/locales.test";
+import * as Messages from "../../src/azunit.globalization.messages";
+import { AzuLocaleTest } from "../azunit.globalization/locales.test";
 
 describe("ConsoleLog", function() {
     describe("#write()", function() {
@@ -13,7 +13,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.clientText("A");
+            let message = Messages.Resources.clientText("A");
             log.write(message);
             assert.equal(messages[0], message.toString(locale));
         });
@@ -24,7 +24,7 @@ describe("ConsoleLog", function() {
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
             let error = new Error("1");
-            let message = Globalization.Resources.fatalError(error);
+            let message = Messages.Resources.fatalError(error);
             log.error(error);
             assert.equal(messages[0], message.toString(locale));
         });
@@ -77,7 +77,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
+            let message = Messages.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
             let startRun = new Date(2000, 1, 1, 0, 0, 0, 0);
             let startGroup = new Date(2000, 1, 1, 0, 0, 1, 0);
             log.startRun("name", "subscription", startRun);
@@ -97,7 +97,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
+            let message = Messages.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
             let startRun = new Date(2000, 1, 1, 0, 0, 0, 0);
             let startGroup = new Date(2000, 1, 1, 0, 0, 1, 0);
             log.startRun("name", "subscription", startRun);
@@ -113,7 +113,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
+            let message = Messages.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
             let startRun = new Date(2000, 1, 1, 0, 0, 0, 0);
             let startGroup = new Date(2000, 1, 1, 0, 0, 1, 0);
             log.startRun("name", "subscription", startRun);
@@ -130,7 +130,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
+            let message = Messages.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
             let startRun = new Date(2000, 1, 1, 0, 0, 0, 0);
             let startGroup = new Date(2000, 1, 1, 0, 0, 1, 0);
             log.startRun("name", "subscription", startRun);
@@ -148,7 +148,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
+            let message = Messages.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
             let startRun = new Date(2000, 1, 1, 0, 0, 0, 0);
             let startGroup = new Date(2000, 1, 1, 0, 0, 1, 0);
             log.startRun("name", "subscription", startRun);
@@ -162,7 +162,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
+            let message = Messages.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
             let startRun = new Date(2000, 1, 1, 0, 0, 0, 0);
             let startGroup = new Date(2000, 1, 1, 0, 0, 1, 0);
             log.startRun("name", "subscription", startRun);
@@ -177,7 +177,7 @@ describe("ConsoleLog", function() {
             let locale = new AzuLocaleTest();
             let messages = new Array<string>();
             let log = new Log.ConsoleLog(locale, (text: string) => { messages.push(text); });
-            let message = Globalization.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
+            let message = Messages.Resources.getAssertionEqualsSuccessMessage("name", "resource", 5, 5);
             let startRun = new Date(2000, 1, 1, 0, 0, 0, 0);
             let startGroup = new Date(2000, 1, 1, 0, 0, 1, 0);
             log.startRun("name", "subscription", startRun);

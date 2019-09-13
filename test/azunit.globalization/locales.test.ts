@@ -1,4 +1,4 @@
-import { IAzuLocale } from "../../src/i18n/locale";
+import { IAzuLocale } from "../../src/azunit.globalization";
 
 export class AzuLocaleTest implements IAzuLocale {
 

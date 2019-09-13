@@ -1,14 +1,6 @@
-import { IAzuLocale } from './locale';
-import { AzuLocaleEnGb } from './locales.en-gb';
-import * as Messages from './messages';
+import { MessageType } from './MessageType';
+import * as Messages from "./messages";
 import { AzuState } from '../io/results';
-
-export { IAzuLocale };
-export { IAzuCultureMessage } from "./messages";
-
-export class Culture {
-    static enGb() { return new AzuLocaleEnGb(); }
-}
 
 export class Resources {
 
@@ -17,19 +9,19 @@ export class Resources {
     }
 
     static clientTrace(message: string) {
-        return new Messages.AzuClientMessage(message, Messages.MessageType.Minor);
+        return new Messages.AzuClientMessage(message, MessageType.Minor);
     }
 
     static clientText(message: string) {
-        return new Messages.AzuClientMessage(message, Messages.MessageType.Default);
+        return new Messages.AzuClientMessage(message, MessageType.Default);
     }
 
     static clientWarning(message: string) {
-        return new Messages.AzuClientMessage(message, Messages.MessageType.Warning);
+        return new Messages.AzuClientMessage(message, MessageType.Warning);
     }
 
     static clientError(message: string) {
-        return new Messages.AzuClientMessage(message, Messages.MessageType.Error);
+        return new Messages.AzuClientMessage(message, MessageType.Error);
     }
 
     static fatalError(err: Error) {

@@ -1,9 +1,9 @@
-import * as Globalization from "../i18n/locales";
+import * as Globalization from "../azunit.globalization";
 import * as Results from "./results";
-import { MessageType, AssertionMessage } from "../i18n/messages";
+import { MessageType, AssertionMessage, IAzuCultureMessage, Resources } from "../azunit.globalization.messages";
 
 export interface IAzuLog {
-    write(message: Globalization.IAzuCultureMessage): void;
+    write(message: IAzuCultureMessage): void;
     error(err: Error): void;
 
     startRun(name: string, subscription: string, start?: Date): void;
@@ -28,7 +28,7 @@ abstract class BaseLog implements IAzuLog {
 
     private _stack = new Array();
 
-    public abstract write(message: Globalization.IAzuCultureMessage): void;
+    public abstract write(message: IAzuCultureMessage): void;
     public abstract error(err: Error): void;
 
     protected getStackSize() {
@@ -119,7 +119,7 @@ export class ConsoleLog extends BaseLog {
 
     private _log: ConsoleLogFunc;
 
-    write(message: Globalization.IAzuCultureMessage) {
+    write(message: IAzuCultureMessage) {
         
         let iconFormatter = (i: string, t: MessageType) => {
             if (t == MessageType.Success) {
@@ -169,20 +169,20 @@ export class ConsoleLog extends BaseLog {
     }
 
     error(err: Error) {
-        let message = Globalization.Resources.fatalError(err);
+        let message = Resources.fatalError(err);
         this._log(message.toString(this._locale, ));
     }
 
     protected openRun(name: string, subscription: string): void {
-        this.write(Globalization.Resources.startRun(name, subscription));
+        this.write(Resources.startRun(name, subscription));
     }
 
     protected openGroup(name: string, source: string): void {
-        this.write(Globalization.Resources.startGroup(name, source));
+        this.write(Resources.startGroup(name, source));
     }
     
     protected openTest(name: string): void {
-        this.write(Globalization.Resources.startTest(name));
+        this.write(Resources.startTest(name));
     }
     
     protected writeAssert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void {
@@ -210,7 +210,7 @@ export class MultiLog implements IAzuLog {
 
     private _logs : Array<IAzuLog>;
 
-    write(message: Globalization.IAzuCultureMessage): void {
+    write(message: IAzuCultureMessage): void {
         this._logs.forEach(l => l.write(message));
     }
     error(err: Error): void {
@@ -266,12 +266,12 @@ export class ResultsLog extends BaseLog {
     private _group: (Results.AzuGroupResult | null) = null;
     private _test: (Results.AzuTestResult | null) = null;
 
-    write(message: Globalization.IAzuCultureMessage) {
+    write(message: IAzuCultureMessage) {
         
     }
 
     error(err: Error) {
-        let message = Globalization.Resources.fatalError(err);
+        let message = Resources.fatalError(err);
         console.log(message.toString(this._locale, ));
     }
 
