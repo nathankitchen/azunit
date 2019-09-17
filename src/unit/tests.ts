@@ -1,7 +1,7 @@
 import * as Client from "./client";
 import * as Main from "../main";
 import * as Globalization from "../azunit.globalization.messages/Resources";
-import { IAzuLog } from "../io/log";
+import { IAzuLog } from "../azunit.results.logging";
 
 import JsonPath from "jsonpath";
 

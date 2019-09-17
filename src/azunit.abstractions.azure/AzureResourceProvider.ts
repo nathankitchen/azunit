@@ -1,65 +1,8 @@
-/*  Abstractions.ts
- *
- *  A couple of interfaces to abstract cloud operations from the main Azure
- *  Unit test framework, to enable test/mock scenarios.
- */
 import Azure from "ms-rest-azure";
 import { ResourceManagementClient as RM } from "azure-arm-resource";
 import * as ResourceManager from "azure-arm-resource";
-
-export interface IAzureToken {
-    value: Azure.DeviceTokenCredentials | Azure.ApplicationTokenCredentials | Azure.UserTokenCredentials | TestTokenCredentials;
-}
-
-export interface IAzureAuthenticator {
-    getSPTokenCredentials(tenant: string, clientId: string, secret: string) : Promise<IAzureToken>;
-}
-
-export interface IAzureResourceProvider {
-    list(subscriptionId: string, token: IAzureToken) : Promise<Array<any>>;
-}
-
-class TestTokenCredentials {}
-
-class AzureToken implements IAzureToken {
-
-    constructor(value: Azure.DeviceTokenCredentials | Azure.ApplicationTokenCredentials | Azure.UserTokenCredentials | TestTokenCredentials)
-    {
-        this.value = value;
-    }
-
-    readonly value: Azure.DeviceTokenCredentials | Azure.ApplicationTokenCredentials | Azure.UserTokenCredentials | TestTokenCredentials;
-}
-
-export class AzureAuthenticator implements IAzureAuthenticator {
-
-    getSPTokenCredentials(tenant: string, clientId: string, secret: string)
-    {
-        return new Promise<IAzureToken>(
-            (resolve, reject) => {
-
-                Azure.loginWithServicePrincipalSecret(clientId, secret, tenant, function(err: Error, credentials: Azure.ApplicationTokenCredentials) {
-                    
-                    if (err) reject(err);
-        
-                    let token = new AzureToken(credentials);
-        
-                    resolve(token);
-                });
-            });
-    }
-}
-
-export class TestAuthenticator implements IAzureAuthenticator {
-
-    getSPTokenCredentials(tenant: string, clientId: string, secret: string)
-    {
-        return new Promise<IAzureToken>(
-            (resolve, reject) => {
-                resolve(new AzureToken(new TestTokenCredentials()));
-            });
-    }
-}
+import { IAzureResourceProvider } from "./IAzureResourceProvider";
+import { IAzureToken } from "./IAzureToken";
 
 export class AzureResourceProvider implements IAzureResourceProvider {
 

@@ -1,0 +1,30 @@
+name: 'Run me'
+security:
+  tenant       : 'cloudskus.onmicrosoft.com'
+  appId        : '$asdf'
+  appKey       : '$ENV'
+  subscription : 'asdf-asdf-asdf-asdf'
+coverage:
+  target       : 90
+  APR          : 1.5
+  failAPR      : false
+  failTarget   : true
+output:
+  silent       : false
+  xml          : '.azunit/output.xml'
+  json         : '.azunit/output.json'
+  html         : '.azunit/output.html'
+  markdown     : '.azunit/output.md'
+  csv          : '.azunit/output.csv'
+suite:
+  - select         : './1/*.spec.js'
+    parameters     : 'my-parameters1.json'
+    tags:          : [ "one", "two" ]
+  - select         : './2/*.spec.js'
+    parameters     : 'my-parameters2.json'
+    tags:          : [ "two", "three" ]
+
+azunit run --config azunit.yml --tags two
+azunit test-files file.js
+
+azunit init

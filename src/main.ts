@@ -1,12 +1,12 @@
-import * as Abstractions from "./azure/abstractions";
+import * as Abstractions from "./azunit.abstractions.azure";
 import * as Globalization from "./azunit.globalization";
 import * as Messages from "./azunit.globalization.messages";
-import * as Log from "./io/log";
+import * as Log from "./azunit.results.logging";
 import * as Client from "./unit/client";
 import * as Tests from "./unit/tests";
 import * as Package from "../package.json";
-import { AzuState } from "./io/results";
-import * as Writers from "./io/writers";
+import { AzuState } from "./azunit";
+import * as Writers from "./azunit.results.writers";
 import vm from "vm";
 
 type AzuFileLoaderFunc = (filename: string) => Promise<string>;

@@ -1,6 +1,6 @@
 import { MessageType } from './MessageType';
 import * as Messages from "./messages";
-import { AzuState } from '../io/results';
+import { AzuState } from '../azunit';
 
 export class Resources {
 

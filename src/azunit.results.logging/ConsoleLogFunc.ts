@@ -1,0 +1,1 @@
+export type ConsoleLogFunc = (text: string) => void;

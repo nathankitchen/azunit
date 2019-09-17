@@ -1,5 +1,5 @@
 import { MessageType } from "./MessageType";
-import { AzuState } from "../io/results";
+import { AzuState } from "../azunit";
 import * as Globalization from "../azunit.globalization";
     
 export type IconFormatterFunc = (token: string, type: MessageType) => string;
