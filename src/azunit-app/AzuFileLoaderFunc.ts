@@ -1,0 +1,1 @@
+export type AzuFileLoaderFunc = (filename: string) => Promise<string>;
