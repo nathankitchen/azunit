@@ -1,6 +1,13 @@
-import { AzuTestFunc } from "./AzuTestFunc";
+import { IAzuClientLog, IAzuTestable } from ".";
 
 export interface IAzuTestContext {
-    test(name: string, callback: AzuTestFunc): void;
-    ignore(name: string, reason: string, callback: AzuTestFunc): void;
+    title: string;
+    description: string;
+    ignore: boolean;
+    readonly categories: Array<string>;
+
+    selectResourcesByProvider(provider: string): IAzuTestable;
+    selectResourcesByName(name: string): IAzuTestable;
+
+    readonly log: IAzuClientLog;
 }

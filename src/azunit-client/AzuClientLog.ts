@@ -1,6 +1,6 @@
-import { IAzuLog } from "../azunit.results.logging";
+import { IAzuLog } from "../azunit-results-logging";
 import { IAzuClientLog } from "./IAzuClientLog";
-import * as Globalization from "../azunit.globalization.messages";
+import * as I18n from "../azunit-i18n";
 
 export class AzuClientLog implements IAzuClientLog {
 
@@ -11,18 +11,18 @@ export class AzuClientLog implements IAzuClientLog {
     private _log: IAzuLog;
 
     trace(message: string) : void {
-        this._log.write(Globalization.Resources.clientTrace(message));
+        this._log.write(I18n.Resources.clientTrace(message));
     }
 
     write(message: string) : void {
-        this._log.write(Globalization.Resources.clientText(message));
+        this._log.write(I18n.Resources.clientText(message));
     }
 
     warning(message: string) : void {
-        this._log.write(Globalization.Resources.clientWarning(message));
+        this._log.write(I18n.Resources.clientWarning(message));
     }
 
     error(message: string) : void {
-        this._log.write(Globalization.Resources.clientError(message));
+        this._log.write(I18n.Resources.clientError(message));
     }
 }

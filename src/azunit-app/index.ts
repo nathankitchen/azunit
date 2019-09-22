@@ -1,7 +1,7 @@
 import * as Globalization from "../azunit-globalization";
 import * as Logging from "../azunit-results-logging";
 import * as Writers from "../azunit-results-writers";
-import * as Services from "../azunit-services";
+import * as Azure from "../azunit-azure";
 
 import { IAzuApp } from "./IAzuApp";
 import { IAzuPrincipal } from "./IAzuPrincipal";
@@ -24,6 +24,7 @@ export function createApp(settings: AzuRunSettings, version: string) {
     let resultsWriters = new Array<Writers.IAzuResultsWriter>();
 
     logs.push(new Logging.ResultsLog(culture));
+    
     if (!settings.silentMode) { logs.push(new Logging.ConsoleLog(culture, (text: string) => { console.log(text); })); }
 
     if (settings.outputXmlPath) { resultsWriters.push(new Writers.XmlAzuResultsWriter(settings.outputXmlPath)); }
@@ -32,10 +33,10 @@ export function createApp(settings: AzuRunSettings, version: string) {
     if (settings.outputMarkdownPath) { resultsWriters.push(new Writers.MarkdownAzuResultsWriter(settings.outputMarkdownPath)); }
     if (settings.outputCsvPath) { resultsWriters.push(new Writers.CsvAzuResultsWriter(settings.outputCsvPath)); }
 
-    let services = new Services.AzuServices();
+    let log = new Logging.MultiLog(logs);
+    let writer = new Writers.MultiAzuResultsWriter(resultsWriters);
+    let authenticator = new Azure.AzureAuthenticator();
+    let resourceProvider = new Azure.AzureResourceProvider();
 
-    services.log = new Logging.MultiLog(logs);
-    services.resultsWriter = new Writers.MultiAzuResultsWriter(resultsWriters);
-
-    return new AzuApp(services, version); 
+    return new AzuApp(version, log, writer, authenticator, resourceProvider);
 }

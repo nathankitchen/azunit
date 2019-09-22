@@ -1,23 +1,26 @@
+import * as Core from "../azunit";
 import * as Azure from "../azunit-azure";
-import * as I18n from "../azunit-i18n";
 import * as Client from "../azunit-client";
-import * as Services from "../azunit-services";
+import * as I18n from "../azunit-i18n";
+import * as Logging from "../azunit-results-logging";
+import * as Writers from "../azunit-results-writers";
 
 import { IAzuPrincipal } from "./IAzuPrincipal";
 import { IAzuSubscription } from "./IAzuSubscription";
-
 import { AzuSubscription } from "./AzuSubscription";
 
 export class AzuPrincipal implements IAzuPrincipal {
 
-    constructor(services: Services.IAzuServices, token: Azure.IAzureToken) {
-        this._services = services;
+    constructor(token: Azure.IAzureToken, log: Logging.IAzuLog, resourceProvider: Azure.IAzureResourceProvider) {
         this._token = token;
+        this._log = log;
+        this._resourceProvider = resourceProvider;
     }
 
-    private _services: Services.IAzuServices;
-    private _token: Azure.IAzureToken;
-
+    private _token: any;
+    private _log: Logging.IAzuLog;
+    private _resourceProvider: Azure.IAzureResourceProvider;
+    
     /**
     * Loads a subscription and allows tests to be run on its resources.
     * @param subscriptionId The ID of the subscription to load resources for.
@@ -28,23 +31,22 @@ export class AzuPrincipal implements IAzuPrincipal {
 
         return new Promise<IAzuSubscription>((resolve, reject) => {
         
-            this._services.log.write(I18n.Resources.statusSubscription(subscriptionId));
+            this._log.write(I18n.Resources.statusSubscription(subscriptionId));
 
-            this._services.resourceProvider
+            this._resourceProvider
                 .list(subscriptionId, this._token)
                 .then((data: Array<any>) => {
-                    let resources = new Array<Client.IAzuTestable>();
+                    let resources = new Array<Client.IAzuResource>();
 
                     data.forEach(r => {
-                        resources.push(new Client.AzuResource(this._services, r)); 
+                        resources.push(new Core.AzuResource(this._log, r)); 
                     });
                     
-                    let sub = new AzuSubscription(this._services, subscriptionId, resources);
+                    let sub = new AzuSubscription(this._log, subscriptionId, resources);
 
                     resolve(sub);
                 })
                 .catch((err: Error) => { reject(err); });
         });
-        
     };
 }

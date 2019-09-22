@@ -41,33 +41,38 @@ settings.outputCsvPath = program.outputCsv;
 
 let app = App.createApp(settings, Package.version);
 
+let exceptionHandler = (err: Error) => {
+    app.logError(err);
+    process.exitCode = 1;
+};
+
 app.useServicePrincipal(program.tenant, program.appId, program.appKey)
     .then((principal) => {
 
         principal.getSubscription(program.subscription)
             .then((subscription) => {
 
-                let fileLoader = (filename: string) => { return new Promise<string>((resolve, reject) => {
-                    if (filename) {
-                        fs.readFile(filename, "utf8", function (err, data) {
-                            if (err) { reject(err); }
-                            resolve(data);
-                        });
-                    }
-                    else {
-                        resolve("");
-                    }
-                });};
+                let fileLoader = (filename: string) => {
+                    return new Promise<string>((resolve, reject) => {
+                        if (filename) {
+                            fs.readFile(filename, "utf8", function (err, data) {
+                                if (err) { reject(err); }
+                                resolve(data);
+                            });
+                        }
+                        else {
+                            resolve("");
+                        }
+                    });
+                };
 
                 subscription.createTestRun(program.runName, filenames, program.parameters, fileLoader)
-                .then((success) => {
-                    process.exitCode = (success) ? 0 : 1;
-                })
-                .catch((err) => { console.log(err); });
-            });
-
-    }).catch((err) => {
-        console.log("Fatal error");
-        console.error(err);
-        process.exitCode = 1;
-    });
+                    .then((results) => {
+                        let success = app.logResults(results);
+                        process.exitCode = (success) ? 0 : 1;
+                    })
+                    .catch(exceptionHandler);
+            })
+            .catch(exceptionHandler);
+    })
+    .catch(exceptionHandler);

@@ -1,18 +1,17 @@
 import { AzuTestFunc } from "./AzuTestFunc";
 import { IAzuValue } from "./IAzuValue";
 import { IAzuClientLog } from "./IAzuClientLog";
-import { IAzuTest } from "./IAzuTest";
+import { IAzuTestContext } from "./IAzuTestContext";
 import { IAzuTestable } from "./IAzuTestable";
-
-
-
+import { IAzuResource } from "./IAzuResource";
 
 export { 
-    IAzuTest, 
+    IAzuTestContext, 
     IAzuTestable,
+    IAzuResource,
     IAzuClientLog,
     IAzuValue,
-    AzuTestFunc 
+    AzuTestFunc
 };
 
 export function title(name: string,) {};

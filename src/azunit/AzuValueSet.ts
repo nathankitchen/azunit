@@ -1,6 +1,6 @@
-import * as Logs from "../azunit.results.logging";
+import * as Logs from "../azunit-results-logging";
 
-import { IAzuValue } from "./IAzuValue";
+import { IAzuValue } from "../azunit-client/IAzuValue";
 import { AzuValue } from "./AzuValue";
 
 export class AzuValueSet implements IAzuValue {

@@ -1,1 +1,3 @@
-export type AzuTestFunc = (resources: IAzuTest) => void;
+import { IAzuTestContext } from "./IAzuTestContext";
+
+export type AzuTestFunc = (resources: IAzuTestContext) => void;

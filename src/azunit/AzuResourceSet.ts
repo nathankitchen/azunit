@@ -1,14 +1,14 @@
-import * as Logging from "../azunit.results.logging";
+import * as Logging from "../azunit-results-logging";
 
-import { IAzuValue } from "./IAzuValue";
-import { IAzuTestable } from "./IAzuTestable";
-import { AzuResource } from "./AzuResource";
+import { IAzuValue } from "../azunit-client/IAzuValue";
+import { IAzuTestable } from "../azunit-client/IAzuTestable";
+import { IAzuResource } from "../azunit-client/IAzuResource";
 import { AzuValue } from "./AzuValue";
 import { AzuValueSet } from "./AzuValueSet";
 
 export class AzuResourceSet implements IAzuTestable {
 
-    constructor(log: Logging.IAzuLog, resources: Array<AzuResource>) {
+    constructor(log: Logging.IAzuLog, resources: Array<IAzuResource>) {
         this._resources = resources;
         this._log = log;
         
@@ -21,7 +21,7 @@ export class AzuResourceSet implements IAzuTestable {
 
     public shouldHaveInstanceCount : IAzuValue;
 
-    private _resources: Array<AzuResource>;
+    private _resources: Array<IAzuResource>;
     private _log: Logging.IAzuLog;
 
     shouldHaveProperty(selector: string) {

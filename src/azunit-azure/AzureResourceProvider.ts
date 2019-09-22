@@ -6,7 +6,7 @@ import { IAzureToken } from "./IAzureToken";
 
 export class AzureResourceProvider implements IAzureResourceProvider {
 
-    list(subscriptionId: string, token: IAzureToken) {
+    list(subscriptionId: string, token: IAzureToken): any {
         
         return new Promise<any>(
             (resolve, reject) => {

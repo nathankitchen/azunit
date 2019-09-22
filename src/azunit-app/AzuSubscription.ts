@@ -1,32 +1,31 @@
 import * as Client from "../azunit-client";
-import * as I18n from "../azunit-i18n";
-import * as Services from "../azunit-services";
+import * as Logging from "../azunit-results-logging";
 
 import { IAzuSubscription } from "./IAzuSubscription";
 import { AzuFileLoaderFunc } from "./AzuFileLoaderFunc";
-
-import { AzuState } from "../azunit";
+import { AzuTestContext } from "../azunit/AzuTestContext";
+import { IAzuRunResult } from "../azunit-results";
 
 import * as VM from "vm";
 
 export class AzuSubscription implements IAzuSubscription {
     
-    constructor (services: Services.IAzuServices, subscriptionId: string, resources: Array<Client.IAzuTestable>) {
-        this._services = services;
+    constructor (log: Logging.IAzuLog, subscriptionId: string, resources: Array<Client.IAzuResource>) {
+        this._log = log;
         this._resources = resources;
         this.subscriptionId = subscriptionId;
     }
 
-    private _resources: Array<Client.IAzuTestable>;
-    private _services: Services.IAzuServices;
+    private _resources: Array<Client.IAzuResource>;
+    private _log: Logging.IAzuLog;
 
     public readonly subscriptionId: string;
 
-    createTestRun(name: string, filenames: Array<string>, parameterFile: string, fileLoader: AzuFileLoaderFunc) : Promise<boolean> {
+    createTestRun(name: string, filenames: Array<string>, parameterFile: string, fileLoader: AzuFileLoaderFunc) : Promise<Array<IAzuRunResult>> {
 
-        this._services.log.startRun(name, this.subscriptionId);
+        this._log.startRun(name, this.subscriptionId);
 
-        this._resources.forEach(resource => this._services.log.trackResource(resource.id, resource.name));
+        this._resources.forEach(resource => this._log.trackResource(resource.id, resource.name));
     
         let parameterLoader = new Promise<string>((resolve, reject) => { resolve(""); });
 
@@ -53,7 +52,6 @@ export class AzuSubscription implements IAzuSubscription {
                 var fileTest = fileLoader(filename).then((code) => {
     
                     let start = new Date();
-                    let ctx = new Client.AzuTestContext(this._services, this._resources);
     
                     let script = new VM.Script(code);
                     
@@ -74,11 +72,24 @@ export class AzuSubscription implements IAzuSubscription {
     
                     script.runInContext(env);
     
-                    this._services.log.startGroup(sandboxTitle, filename, start);
+                    this._log.startGroup(sandboxTitle, filename, start);
                     
-                    sandboxTests.forEach(i => { ctx.test(i.name, i.callback); });
+                    sandboxTests.forEach(i => {
+                        this._log.startTest(i.name);
+
+                        let test = new AzuTestContext(this._log, i.name, this._resources);
+                
+                        try {
+                            i.callback(test);
+                        }
+                        catch (e) {
+                
+                        }
+                        
+                        this._log.endTest();
+                    });
     
-                    this._services.log.endGroup();
+                    this._log.endGroup();
                 });
     
                 fileTestPromises.push(fileTest);
@@ -87,35 +98,7 @@ export class AzuSubscription implements IAzuSubscription {
     
             return Promise.all(fileTestPromises)
                 .then(() => {
-                    let success = true;
-                    let results = this._services.log.endRun();
-    
-                    let totalTests = 0;
-                    let totalFailures = 0;
-                    let totalTime = 0;
-
-                    if (results) {
-                        results.forEach(result => {
-                            if (result) {
-                                success = (success && (result.getState() != AzuState.Failed));
-                                this._services.resultsWriter.write(result);
-                                totalTests += result.getTestCount();
-                                totalFailures += result.getTestFailureCount();
-                                totalTime += result.getDurationSeconds();
-                            }
-                        });
-                    }
-    
-                    if (!success) {
-                        this._services.log.write(I18n.Resources.endRunFailed(totalTests, totalFailures, totalTime));
-                    }
-                    else {
-                        this._services.log.write(I18n.Resources.endRunPassed(totalTests, totalTime));
-                    }
-    
-                    this._services.log.write(I18n.Resources.completed());
-    
-                    return success;
+                    return this._log.endRun();
                 });
         });
     }

@@ -1,7 +1,7 @@
 import * as I18n from "../azunit-i18n";
 import * as Logging from "../azunit-results-logging";
 
-import { IAzuValue } from "./IAzuValue";
+import { IAzuValue } from "../azunit-client/IAzuValue";
 
 export class AzuValue implements IAzuValue {
 
