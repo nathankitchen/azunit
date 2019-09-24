@@ -1,6 +1,6 @@
 import "mocha";
 import assert = require("assert");
-import * as Globalization from "../../src/azunit.globalization.messages";
+import * as Globalization from "../../src/azunit-i18n";
 
 describe("Resources", function() {
     describe("#clientError()", function() {
