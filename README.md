@@ -1,9 +1,11 @@
 # AzureUnit
+[![Build Status](https://travis-ci.com/nathankitchen/azunit.svg?branch=master)](https://travis-ci.com/nathankitchen/azunit)
+
 A unit testing framework for Microsoft Azure resources, written in NodeJS and TypeScript. Designed to test any Azure cloud environment with ARM-based resources.
 
 AzUnit authenticates with Azure and accesses a subscription, downloading the JSON ARM template defining each resource. It then finds the latest API version for the relevant provider and resource type, and uses it to download the full JSON definition for the resource.
 
-Tests comprise a series of JsonPath-based assertions to validate the properties of the resources. Code coverage is pretty dumb: it works by tracking which resources have had assertions run against them, and spitting out the coverage level as a percentage.
+Tests comprise a series of JsonPath-based assertions to validate the properties of the resources. Code coverage tracks which resources have assertions run against them, and provides coverage level as a percentage.
 
 ## WARNING
 This framework is incomplete! It nominally "works", but it won't be useful until a few more features are added.
