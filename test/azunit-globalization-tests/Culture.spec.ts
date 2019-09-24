@@ -1,6 +1,6 @@
 import "mocha";
 import assert = require("assert");
-import * as Globalization from "../../src/azunit.globalization";
+import * as Globalization from "../../src/azunit-globalization";
 
 describe("Culture", function() {
     describe("#enGb()", function() {

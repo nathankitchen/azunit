@@ -1,8 +1,8 @@
 import "mocha";
 import assert = require("assert");
-import * as Log from "../../src/azunit.results.logging";
-import * as Messages from "../../src/azunit.globalization.messages";
-import * as Globalization from "../../src/azunit.globalization";
+import * as Log from "../../src/azunit-results-logging";
+import * as Messages from "../../src/azunit-i18n";
+import * as Globalization from "../../src/azunit-globalization";
 
 describe("ConsoleLog", function() {
     describe("#write()", function() {
