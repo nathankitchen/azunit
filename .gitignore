@@ -28,3 +28,7 @@ node_modules/
 
 # Test harness
 run.sh
+project.sh
+
+#maclife
+.DS_Store

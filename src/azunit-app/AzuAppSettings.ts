@@ -1,4 +1,4 @@
-export class AzuRunSettings {
+export class AzuAppSettings {
 
     public culture: string = "enGb";
     public silentMode: boolean = false;

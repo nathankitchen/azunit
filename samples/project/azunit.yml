@@ -1,5 +1,5 @@
 name: 'Run me'
-security:
+auth:
   tenant       : 'cloudskus.onmicrosoft.com'
   appId        : '$asdf'
   appKey       : '$ENV'
@@ -24,7 +24,7 @@ suite:
     parameters     : 'my-parameters2.json'
     tags:          : [ "two", "three" ]
 
-azunit run --config azunit.yml --tags two
-azunit test-files file.js
+azunit run file.js
+azunit project --config azunit.yml --tags two
 
 azunit init

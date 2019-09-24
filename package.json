@@ -14,13 +14,15 @@
     "commander": "^2.20.0",
     "jsonpath": "^1.0.2",
     "ms-rest-azure": "^3.0.0",
-    "xml-writer": "^1.7.0"
+    "xml-writer": "^1.7.0",
+    "yaml": "^1.6.0"
   },
   "devDependencies": {
     "@types/commander": "^2.12.2",
     "@types/jsonpath": "^0.2.0",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.6.8",
+    "@types/yaml": "^1.0.2",
     "mocha": "^6.2.0",
     "mocha-typescript": "^1.1.17",
     "nyc": "^14.1.1",

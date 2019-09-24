@@ -29,7 +29,7 @@ if (!filenames.length) {
     process.exit(1);
 }
 
-let settings = new App.AzuRunSettings();
+let settings = new App.AzuAppSettings();
 
 settings.silentMode = program.silent;
 
