@@ -17,9 +17,6 @@ program
     .option("-p, --parameters [path]", "A file containing JSON data passed to the test runs")
     .option('-X, --output-xml [path]', 'Name of the file to output results to in XML format')
     .option('-J, --output-json [path]', 'Name of the file to output results to in JSON format')
-    .option('-H, --output-html [path]', 'Name of the file to output results to in HTML format')
-    .option('-M, --output-md [path]', 'Name of the file to output results to in Markdown format')
-    .option('-C, --output-csv [path]', 'Name of the file to output results to in CSV format')
     .parse(process.argv);
 
 var filenames = program.args;
@@ -35,9 +32,6 @@ settings.silentMode = program.silent;
 
 settings.outputXmlPath = program.outputXml;
 settings.outputJsonPath = program.outputJson;
-settings.outputHtmlPath = program.outputHtml;
-settings.outputMarkdownPath = program.outputMd;
-settings.outputCsvPath = program.outputCsv;
 
 let app = App.createApp(settings, Package.version);
 

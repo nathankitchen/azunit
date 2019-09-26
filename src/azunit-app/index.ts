@@ -31,9 +31,6 @@ export function createApp(settings: AzuAppSettings, version: string) {
 
     if (settings.outputXmlPath) { resultsWriters.push(new Writers.XmlAzuResultsWriter(settings.outputXmlPath)); }
     if (settings.outputJsonPath) { resultsWriters.push(new Writers.JsonAzuResultsWriter(settings.outputJsonPath)); }
-    if (settings.outputHtmlPath) { resultsWriters.push(new Writers.HtmlAzuResultsWriter(settings.outputHtmlPath)); }
-    if (settings.outputMarkdownPath) { resultsWriters.push(new Writers.MarkdownAzuResultsWriter(settings.outputMarkdownPath)); }
-    if (settings.outputCsvPath) { resultsWriters.push(new Writers.CsvAzuResultsWriter(settings.outputCsvPath)); }
 
     let log = new Logging.MultiLog(logs);
     let writer = new Writers.MultiAzuResultsWriter(resultsWriters);

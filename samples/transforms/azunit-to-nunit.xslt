@@ -1,111 +1,75 @@
 <?xml version="1.0"?>
-<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ms="urn:schemas-microsoft-com:xslt" exclude-result-prefixes="ms">
 
-  <xsl:output method="xml"/>
+    <xsl:output method="xml" version="1.0" encoding="utf-8" omit-xml-declaration="no" indent="yes" cdata-section-elements="message stacktrace" />
+    <xsl:strip-space elements="*"/>
 
-  <xsl:template match="/">
-    Article - <xsl:value-of select="/Article/Title"/>
-    Authors: <xsl:apply-templates select="/Article/Authors/Author"/>
-  </xsl:template>
+    <xsl:template match="azunit">
+        <test-run id="1" name="AzureUnitReport" fullname="AzureUnitReportNunit3" engine-version="3.9.0.0" clr-version="4.0.30319.42000" testcasecount="{count(//test)}" total="{count(//test)}" errors="{count(//test[@result='Failed'])}" failures="0" not-run="{count(//test[@result='Ignored'])}" inconclusive="0" ignored="0" skipped="0" invalid="0" start-time="{@startTime}" duration="{@duration}">
+            <command-line>a</command-line>
 
-  <xsl:template match="Author">
-    - <xsl:value-of select="." />
-  </xsl:template>
+            <xsl:element name="test-suite">
+                <xsl:attribute name="type">Assembly</xsl:attribute>
+                <xsl:attribute name="id"><xsl:value-of select="concat(generate-id(.),'-sub')"/></xsl:attribute>
+                <xsl:attribute name="name">AzUnit</xsl:attribute>
+                <xsl:attribute name="fullname">AzUnit</xsl:attribute>
+                <xsl:attribute name="testcasecount"><xsl:value-of select="count(//test)"/></xsl:attribute>
+                <xsl:attribute name="result"><xsl:value-of select="@result"/></xsl:attribute>
+                <xsl:attribute name="time"><xsl:value-of select="@duration"/></xsl:attribute>
+                <xsl:attribute name="total"><xsl:value-of select="count(//test)"/></xsl:attribute>
+                <xsl:attribute name="passed"><xsl:value-of select="count(//test[@result='Passed'])"/></xsl:attribute>
+                <xsl:attribute name="failed"><xsl:value-of select="count(//test[@result='Failed'])"/></xsl:attribute>
+                <xsl:attribute name="inconclusive">0</xsl:attribute>
+                <xsl:attribute name="skipped">0</xsl:attribute>
+                <xsl:attribute name="asserts"><xsl:value-of select="count(//assertion)"/></xsl:attribute>
 
-</xsl:stylesheet>
+                <environment framework-version="3.11.0.0" clr-version="4.0.30319.42000" os-version="Microsoft Windows NT 6.1.7600.0" platform="Win32NT" cwd="C:\Program Files\NUnit 2.6\bin" machine-name="Azure Hosted Agent" user="charlie" user-domain="NORTHAMERICA" culture="en-GB" uiculture="en-GB" os-architecture="x86" />
 
-<!--
-This file represents the results of running a test suite
--->
-<test-results name="C:\Program Files\NUnit 2.6\bin\tests\mock-assembly.dll" total="21" errors="1" failures="1" not-run="7" inconclusive="1" ignored="4" skipped="0" invalid="3" date="2012-02-04" time="11:46:05">
-    <environment nunit-version="2.6.0.12035" clr-version="2.0.50727.4963" os-version="Microsoft Windows NT 6.1.7600.0" platform="Win32NT" cwd="C:\Program Files\NUnit 2.6\bin" machine-name="CHARLIE-LAPTOP" user="charlie" user-domain="charlie-laptop"/>
-    <culture-info current-culture="en-US" current-uiculture="en-US"/>
-    <test-suite type="Assembly" name="C:\Program Files\NUnit 2.6\bin\tests\mock-assembly.dll" executed="True" result="Failure" success="False" time="0.094" asserts="0">
-    <results>
-        <test-suite type="Namespace" name="NUnit" executed="True" result="Failure" success="False" time="0.078" asserts="0">
-            <results>
-                <test-suite type="Namespace" name="Tests" executed="True" result="Failure" success="False" time="0.078" asserts="0">
-                    <results>
-                        <test-suite type="Namespace" name="Assemblies" executed="True" result="Failure" success="False" time="0.031" asserts="0">
-                            <results>
-                                <test-suite type="TestFixture" name="MockTestFixture" description="Fake Test Fixture" executed="True" result="Failure" success="False" time="0.031" asserts="0">
-                                    <categories>
-                                        <category name="FixtureCategory"/>
-                                    </categories>
-                                    <results>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.FailingTest" executed="True" result="Failure" success="False" time="0.016" asserts="0">
-                                            <failure>
-                                                <message>
-                                                    <![CDATA[ Intentional failure ]]>
-                                                </message>
-                                                <stack-trace>
-                                                    <![CDATA[
-                                                    at NUnit.Tests.Assemblies.MockTestFixture.FailingTest()
-                                                    ]]>
-                                                </stack-trace>
-                                            </failure>
-                                        </test-case>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.InconclusiveTest" executed="True" result="Inconclusive" success="False" time="0.000" asserts="0">
-                                            <reason>
-                                                <message>
-                                                <![CDATA[ No valid data ]]>
-                                                </message>
-                                            </reason>
-                                        </test-case>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.MockTest1" description="Mock Test #1" executed="True" result="Success" success="True" time="0.000" asserts="0"/>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.MockTest2" description="This is a really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really, really long description" executed="True" result="Success" success="True" time="0.000" asserts="0">
-                                            <categories>
-                                                <category name="MockCategory"/>
-                                            </categories>
-                                            <properties>
-                                                <property name="Severity" value="Critical"/>
-                                            </properties>
-                                        </test-case>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.MockTest4" executed="False" result="Ignored">
-                                            <categories>
-                                                <category name="Foo"/>
-                                            </categories>
-                                            <reason>
-                                                <message>
-                                                    <![CDATA[ ignoring this test method for now ]]>
-                                                </message>
-                                            </reason>
-                                        </test-case>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.MockTest5" executed="False" result="NotRunnable">
-                                            <reason>
-                                                <message>
-                                                    <![CDATA[ Method is not public ]]>
-                                                </message>
-                                            </reason>
-                                        </test-case>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.NotRunnableTest" executed="False" result="NotRunnable">
-                                            <reason>
-                                                <message>
-                                                    <![CDATA[ No arguments were provided ]]>
-                                                </message>
-                                            </reason>
-                                        </test-case>
-                                        <test-case name="NUnit.Tests.Assemblies.MockTestFixture.TestWithException" executed="True" result="Error" success="False" time="0.000" asserts="0">
-                                            <failure>
-                                                <message>
-                                                    <![CDATA[
-                                                    System.ApplicationException : Intentional Exception
-                                                    ]]>
-                                                </message>
-                                                <stack-trace>
-                                                    <![CDATA[
-                                                    at NUnit.Tests.Assemblies.MockTestFixture.MethodThrowsException() at NUnit.Tests.Assemblies.MockTestFixture.TestWithException()
-                                                    ]]>
-                                                </stack-trace>
-                                            </failure>
-                                        </test-case>
-                                    </test-suite>
-                                </results>
-                            </test-suite>
-                        </results>
-                    </test-suite>
-                </results>
+                <xsl:apply-templates />
+
+            </xsl:element>
+        </test-run>
+    </xsl:template>
+
+    <xsl:template match="group">
+     
+            <test-suite type="TestSuite" id="{concat(generate-id(.),'-suite-',position())}" name="Az1" fullname="Az2" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2019-02-01 17:03:03Z" end-time="2019-02-01 17:03:04Z" duration="0.526290" total="2" passed="1" failed="1" warnings="0" inconclusive="0" skipped="0" asserts="1">
+                <test-suite type="TestFixture" id="{concat(generate-id(.),'-fixture-',position())}" name="UnitTest1" fullname="UnitTestDemoTest.UnitTest1" classname="UnitTestDemoTest.UnitTest1" runstate="Runnable" testcasecount="2" result="Failed" site="Child" start-time="2019-02-01 17:03:03Z" end-time="2019-02-01 17:03:04Z" duration="0.495486" total="2" passed="1" failed="1" warnings="0" inconclusive="0" skipped="0" asserts="1">
+
+                    <xsl:apply-templates />
+
+                </test-suite>
             </test-suite>
-        </results>
-    </test-suite>
-</test-results>
+
+       
+
+    </xsl:template>
+
+    <xsl:template match="test[@result='Failed']">
+        <test-case id="{generate-id(.)}" name="{@name}" fullname="{@name}" result="{@result}" start-time="{@startTime}" duration="{@duration}" asserts="{count(assertion)}">
+            <failure>
+                <message>
+                    <xsl:for-each select="assertion[@result='Failed']">
+                        <xsl:value-of select="text()" />
+                        <xsl:text>&#10;</xsl:text>
+                    </xsl:for-each>
+                </message>
+                <stacktrace>
+                    <xsl:for-each select="assertion">
+                        <xsl:value-of select="text()" />
+                        <xsl:text>&#10;</xsl:text>
+                    </xsl:for-each>
+                </stacktrace>
+            </failure>
+        </test-case>
+    </xsl:template>
+  
+    <xsl:template match="test[@result='Passed']">
+        <test-case id="{generate-id(.)}" name="{@name}" fullname="{@name}" result="{@result}" start-time="{@startTime}" duration="{@duration}" asserts="{count(assertion)}" />
+    </xsl:template>
+
+    <xsl:template match="coverage">
+        <!-- Bury the coverage data -->
+    </xsl:template>
+  
+</xsl:stylesheet>
