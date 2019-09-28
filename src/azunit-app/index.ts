@@ -6,19 +6,21 @@ import * as Azure from "../azunit-azure";
 import { IAzuApp } from "./IAzuApp";
 import { IAzuPrincipal } from "./IAzuPrincipal";
 import { IAzuSubscription } from "./IAzuSubscription";
-import { AzuAppSettings } from "./AzuAppSettings";
+import { AzuOutputSettings } from "./AzuOutputSettings";
 import { AzuAuthSettings } from "./AzuAuthSettings";
 import { AzuApp } from "./AzuApp";
+import { AzuSettings } from "./AzuSettings";
 
 export { 
     IAzuApp,
     IAzuPrincipal,
     IAzuSubscription,
-    AzuAppSettings,
+    AzuSettings,
+    AzuOutputSettings,
     AzuAuthSettings
 };
 
-export function createApp(settings: AzuAppSettings, version: string) {
+export function createApp(settings: AzuOutputSettings, version: string) {
 
     let culture = Globalization.Culture.enGb();
 

@@ -26,7 +26,7 @@ if (!filenames.length) {
     process.exit(1);
 }
 
-let settings = new App.AzuAppSettings();
+let settings = new App.AzuOutputSettings();
 
 settings.silentMode = program.silent;
 

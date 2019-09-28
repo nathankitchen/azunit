@@ -4,14 +4,17 @@
   "description": "A lightweight unit testing framework for Microsoft Azure based on the ARM resource graphs.",
   "main": "dist/src/main.js",
   "bin": {
-    "azunit": "dist/src/azunit.app.console/azunit.js"
+    "azunit": "dist/src/azunit-app-console/azunit.js"
   },
   "directories": {
     "test": "test"
   },
   "dependencies": {
+    "@types/glob": "^7.1.1",
     "azure-arm-resource": "^7.3.0",
     "commander": "^2.20.0",
+    "dotenv": "^8.1.0",
+    "glob": "^7.1.4",
     "jsonpath": "^1.0.2",
     "ms-rest-azure": "^3.0.0",
     "xml-writer": "^1.7.0",
