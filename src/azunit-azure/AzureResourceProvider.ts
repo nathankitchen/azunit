@@ -74,18 +74,18 @@ export class AzureResourceProvider implements IAzureResourceProvider {
                             // Queue up the promise to get the resource by ID using the identified API.
                             data.forEach(r => {
                                 if (r && r.id) {
-                                    
                                     let api2 = apis.filter(a => a.fqns == r.type);
-                                    
-                                    resourcePromises.push(client.resources.getById(r.id, api2[0].api));
+                                    if (api2 && api2.length > 0) {
+                                        resourcePromises.push(client.resources.getById(r.id, api2[0].api));
+                                    }
                                 }
                             });
 
                             Promise.all(resourcePromises)
-                            .then((resources) => {
-                                resolve(resources);
-                            })
-                            .catch(err => reject(err));
+                                .then((resources) => {
+                                    resolve(resources);
+                                })
+                                .catch(err => reject(err));
 
                         })
                         .catch(err => reject(err));;

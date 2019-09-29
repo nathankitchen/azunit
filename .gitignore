@@ -32,3 +32,6 @@ project.sh
 
 #maclife
 .DS_Store
+
+# Environments
+.env

@@ -45,7 +45,7 @@ export class ResultsLog extends BaseLog {
 
         if (this._run) {
             
-            let resource = null;
+            let resource: Results.IAzuResourceResult | null = null;
 
             for (let i=0; i<this._run.resources.length; i++) {
                 let testResource = this._run.resources[i];

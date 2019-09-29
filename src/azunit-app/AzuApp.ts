@@ -8,13 +8,13 @@ import { IAzuPrincipal } from "./IAzuPrincipal";
 import { AzuPrincipal } from "./AzuPrincipal";
 import { IAzuRunResult } from "../azunit-results";
 import { AzuState } from "../azunit";
+import { AzuOutputSettings } from "./AzuOutputSettings";
 
 export class AzuApp implements IAzuApp {
 
-    constructor(version: string, log: Logging.IAzuLog, writer: Writers.IAzuResultsWriter, authenticator: Azure.IAzureAuthenticator, resourceProvider: Azure.IAzureResourceProvider) {
+    constructor(version: string, log: Logging.IAzuLog, authenticator: Azure.IAzureAuthenticator, resourceProvider: Azure.IAzureResourceProvider) {
         this.version = version;
         this._log = log;
-        this._writer = writer;
         this._authenticator = authenticator;
         this._resourceProvider = resourceProvider;
         
@@ -22,7 +22,6 @@ export class AzuApp implements IAzuApp {
 
     public readonly version: string;
     private readonly _log: Logging.IAzuLog;
-    private readonly _writer: Writers.IAzuResultsWriter;
     private readonly _authenticator: Azure.IAzureAuthenticator;
     private readonly _resourceProvider: Azure.IAzureResourceProvider;
 
@@ -44,17 +43,24 @@ export class AzuApp implements IAzuApp {
         );
     }
     
-    logResults(results: Array<IAzuRunResult>): number {
+    logResults(results: Array<IAzuRunResult>, settings: AzuOutputSettings): number {
         let success = true;
         let totalTests = 0;
         let totalFailures = 0;
         let totalTime = 0;
 
+        let resultsWriters = new Array<Writers.IAzuResultsWriter>();
+    
+        if (settings.outputXmlPath) { resultsWriters.push(new Writers.XmlAzuResultsWriter(settings.outputXmlPath)); }
+        if (settings.outputJsonPath) { resultsWriters.push(new Writers.JsonAzuResultsWriter(settings.outputJsonPath)); }
+
+        const writer = new Writers.MultiAzuResultsWriter(resultsWriters);
+
         if (results) {
             results.forEach(result => {
                 if (result) {
                     success = (success && (result.getState() != AzuState.Failed));
-                    this._writer.write(result);
+                    writer.write(result);
                     totalTests += result.getTestCount();
                     totalFailures += result.getTestFailureCount();
                     totalTime += result.getDurationSeconds();

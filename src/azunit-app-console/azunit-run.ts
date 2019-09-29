@@ -17,9 +17,6 @@ program
     .option("-p, --parameters [path]", "A file containing JSON data passed to the test runs")
     .option('-X, --output-xml [path]', 'Name of the file to output results to in XML format')
     .option('-J, --output-json [path]', 'Name of the file to output results to in JSON format')
-    .option('-H, --output-html [path]', 'Name of the file to output results to in HTML format')
-    .option('-M, --output-md [path]', 'Name of the file to output results to in Markdown format')
-    .option('-C, --output-csv [path]', 'Name of the file to output results to in CSV format')
     .parse(process.argv);
 
 var filenames = program.args;
@@ -29,15 +26,12 @@ if (!filenames.length) {
     process.exit(1);
 }
 
-let settings = new App.AzuAppSettings();
+let settings = new App.AzuSettings();
 
-settings.silentMode = program.silent;
+settings.run.silent = program.silent;
 
-settings.outputXmlPath = program.outputXml;
-settings.outputJsonPath = program.outputJson;
-settings.outputHtmlPath = program.outputHtml;
-settings.outputMarkdownPath = program.outputMd;
-settings.outputCsvPath = program.outputCsv;
+settings.output.outputXmlPath = program.outputXml;
+settings.output.outputJsonPath = program.outputJson;
 
 let app = App.createApp(settings, Package.version);
 
@@ -68,7 +62,7 @@ app.useServicePrincipal(program.tenant, program.appId, program.appKey)
 
                 subscription.createTestRun(program.runName, filenames, program.parameters, fileLoader)
                     .then((results) => {
-                        let success = app.logResults(results);
+                        let success = app.logResults(results, settings.output);
                         process.exitCode = (success) ? 0 : 1;
                     })
                     .catch(exceptionHandler);
