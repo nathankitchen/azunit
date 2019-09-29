@@ -1,14 +1,14 @@
 import * as Logging from "../azunit-results-logging";
 
+import { IAzuAppResource } from "./IAzuAppResource";
 import { IAzuValue } from "../azunit-client/IAzuValue";
 import { IAzuTestable } from "../azunit-client/IAzuTestable";
-import { IAzuResource } from "../azunit-client/IAzuResource";
 import { AzuValue } from "./AzuValue";
 import { AzuValueSet } from "./AzuValueSet";
 
 export class AzuResourceSet implements IAzuTestable {
 
-    constructor(log: Logging.IAzuLog, resources: Array<IAzuResource>) {
+    constructor(log: Logging.IAzuLog, resources: Array<IAzuAppResource>) {
         this._resources = resources;
         this._log = log;
         
@@ -21,7 +21,7 @@ export class AzuResourceSet implements IAzuTestable {
 
     public shouldHaveInstanceCount : IAzuValue;
 
-    private _resources: Array<IAzuResource>;
+    private _resources: Array<IAzuAppResource>;
     private _log: Logging.IAzuLog;
 
     shouldHaveProperty(selector: string) {
@@ -33,5 +33,16 @@ export class AzuResourceSet implements IAzuTestable {
         });
 
         return new AzuValueSet(selector, valueSet, this._log);
+    }
+
+    public getData(): Array<any> {
+        const data = new Array<any>();
+        this._resources.forEach(r => {
+            const subdata = r.getData();
+            subdata.forEach(s => {
+                data.push(s);
+            });
+        });
+        return data;
     }
 }

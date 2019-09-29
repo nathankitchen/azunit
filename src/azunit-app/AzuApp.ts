@@ -17,7 +17,6 @@ export class AzuApp implements IAzuApp {
         this._log = log;
         this._authenticator = authenticator;
         this._resourceProvider = resourceProvider;
-        
     }
 
     public readonly version: string;

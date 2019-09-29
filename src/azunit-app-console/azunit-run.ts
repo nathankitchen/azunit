@@ -1,8 +1,9 @@
 import * as App from "../azunit-app";
 import * as Package from "../../package.json";
 
-import program from "commander";
+import fs from "fs";
 import glob from "glob";
+import program from "commander";
 
 program
     .option("-c, --config <config>", "The configuration file to target")

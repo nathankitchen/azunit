@@ -46,4 +46,6 @@ export class AzuLocaleEnGb implements IAzuLocale {
     readonly test_assertion_lt_fail: string = `{name} on {resource} is {actual}, which is not less than {expected} (${this.test_status_pass}).`;
     readonly test_assertion_lte_pass: string = `{name} on {resource} is {actual}, which is less than or equal to {expected} (${this.test_status_pass}).`;
     readonly test_assertion_lte_fail: string = `{name} on {resource} is {actual}, which is not less than or equal to {expected} (${this.test_status_pass}).`;
+
+    readonly dump_resource_complete: string = "{count} resources dumped to {file}.";
 }

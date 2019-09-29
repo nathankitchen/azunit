@@ -1,9 +1,7 @@
 import * as Core from "../azunit";
 import * as Azure from "../azunit-azure";
-import * as Client from "../azunit-client";
 import * as I18n from "../azunit-i18n";
 import * as Logging from "../azunit-results-logging";
-import * as Writers from "../azunit-results-writers";
 
 import { IAzuPrincipal } from "./IAzuPrincipal";
 import { IAzuSubscription } from "./IAzuSubscription";
@@ -36,7 +34,7 @@ export class AzuPrincipal implements IAzuPrincipal {
             this._resourceProvider
                 .list(subscriptionId, this._token)
                 .then((data: Array<any>) => {
-                    let resources = new Array<Client.IAzuResource>();
+                    let resources = new Array<Core.IAzuAppResource>();
 
                     data.forEach(r => {
                         resources.push(new Core.AzuResource(this._log, r)); 

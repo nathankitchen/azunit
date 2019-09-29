@@ -43,4 +43,6 @@ export interface IAzuLocale {
     readonly test_assertion_lt_fail: string;
     readonly test_assertion_lte_pass: string;
     readonly test_assertion_lte_fail: string;
+
+    readonly dump_resource_complete: string;
 }
