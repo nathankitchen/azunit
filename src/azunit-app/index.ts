@@ -11,6 +11,9 @@ import { AzuAuthSettings } from "./AzuAuthSettings";
 import { AzuApp } from "./AzuApp";
 import { AzuSettings } from "./AzuSettings";
 
+import fs from "fs";
+import { AzuFileLoaderFunc } from "./AzuFileLoaderFunc";
+
 export { 
     IAzuApp,
     IAzuPrincipal,
@@ -36,3 +39,17 @@ export function createApp(settings: AzuSettings, version: string) {
 
     return new AzuApp(version, log, authenticator, resourceProvider);
 }
+
+export function FileLoaderFunc(filename: string): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+        if (filename) {
+            fs.readFile(filename, "utf8", function (err, data) {
+                if (err) { reject(err); }
+                resolve(data);
+            });
+        }
+        else {
+            resolve("");
+        }
+    });
+};

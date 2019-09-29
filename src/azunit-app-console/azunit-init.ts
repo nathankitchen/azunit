@@ -2,6 +2,7 @@ import * as App from "../azunit-app";
 import * as Package from "../../package.json";
 
 import program from "commander";
+import fs from "fs";
 import glob from "glob";
 
 program
@@ -25,7 +26,21 @@ glob(config.run.select, function (er, files) {
             principal.getSubscription(config.auth.subscription)
                 .then((subscription) => {
 
-                    subscription.createTestRun(config.run.name, files, config.run.parameters, App.FileLoaderFunc)
+                    let fileLoader = (filename: string) => {
+                        return new Promise<string>((resolve, reject) => {
+                            if (filename) {
+                                fs.readFile(filename, "utf8", function (err, data) {
+                                    if (err) { reject(err); }
+                                    resolve(data);
+                                });
+                            }
+                            else {
+                                resolve("");
+                            }
+                        });
+                    };
+
+                    subscription.createTestRun(config.run.name, files, config.run.parameters, fileLoader)
                         .then((results) => {
                             let success = app.logResults(results, config.output);
                             process.exitCode = (success) ? 0 : 1;
@@ -35,4 +50,5 @@ glob(config.run.select, function (er, files) {
                 .catch(exceptionHandler);
         })
         .catch(exceptionHandler);
+
     });
