@@ -1,26 +1,24 @@
-name           : Run me
-select         : ./samples/quickstart/*.js
-parameters     : ./samples/quickstart/test.params.json
+run:
+  name          : Run me
+  select        : ./samples/quickstart/*.js
+  parameters    : ./samples/quickstart/test.params.json
+  language      : enGb
+  silent        : false
 auth:
-  tenant       : $TENANT
-  appId        : $APP_ID
-  appKey       : $APP_KEY
-  subscription : $SUBSCRIPTION
+  tenant        : $TENANT
+  appId         : $APP_ID
+  appKey        : $APP_KEY
+  subscription  : $SUBSCRIPTION
 coverage:
   resources:
-    threshold  : 90
-    fail       : true
+    threshold   : 90
+    fail        : true
   APR:
-    threshold  : 1
-    fail       : true
+    threshold   : 1
+    fail        : true
   AAPR:
-    threshold  : 1.2
-    fail       : true
+    threshold   : 1.2
+    fail        : true
 output:
-  lang         : 'enGb'
-  silent       : false
-  json         : '.azunit/output.json'
-  xml          : '.azunit/output.xml'
-  xslt:
-    - transform: "asdf"
-      output: "output.xml"
+  json          : .azunit/output.json
+  xml           : .azunit/output.xml

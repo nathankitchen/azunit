@@ -26,12 +26,12 @@ if (!filenames.length) {
     process.exit(1);
 }
 
-let settings = new App.AzuOutputSettings();
+let settings = new App.AzuSettings();
 
-settings.silentMode = program.silent;
+settings.run.silent = program.silent;
 
-settings.outputXmlPath = program.outputXml;
-settings.outputJsonPath = program.outputJson;
+settings.output.outputXmlPath = program.outputXml;
+settings.output.outputJsonPath = program.outputJson;
 
 let app = App.createApp(settings, Package.version);
 
@@ -62,7 +62,7 @@ app.useServicePrincipal(program.tenant, program.appId, program.appKey)
 
                 subscription.createTestRun(program.runName, filenames, program.parameters, fileLoader)
                     .then((results) => {
-                        let success = app.logResults(results);
+                        let success = app.logResults(results, settings.output);
                         process.exitCode = (success) ? 0 : 1;
                     })
                     .catch(exceptionHandler);

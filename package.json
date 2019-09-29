@@ -10,7 +10,6 @@
     "test": "test"
   },
   "dependencies": {
-    "@types/glob": "^7.1.1",
     "azure-arm-resource": "^7.3.0",
     "commander": "^2.20.0",
     "dotenv": "^8.1.0",
@@ -21,6 +20,7 @@
     "yaml": "^1.6.0"
   },
   "devDependencies": {
+    "@types/glob": "^7.1.1",
     "@types/jsonpath": "^0.2.0",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.6.8",

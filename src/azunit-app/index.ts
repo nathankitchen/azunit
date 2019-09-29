@@ -20,24 +20,19 @@ export {
     AzuAuthSettings
 };
 
-export function createApp(settings: AzuOutputSettings, version: string) {
+export function createApp(settings: AzuSettings, version: string) {
 
     let culture = Globalization.Culture.enGb();
 
     let logs = new Array<Logging.IAzuLog>();
-    let resultsWriters = new Array<Writers.IAzuResultsWriter>();
 
     logs.push(new Logging.ResultsLog(culture));
     
-    if (!settings.silentMode) { logs.push(new Logging.ConsoleLog(culture, (text: string) => { console.log(text); })); }
-
-    if (settings.outputXmlPath) { resultsWriters.push(new Writers.XmlAzuResultsWriter(settings.outputXmlPath)); }
-    if (settings.outputJsonPath) { resultsWriters.push(new Writers.JsonAzuResultsWriter(settings.outputJsonPath)); }
+    if (!settings.run.silent) { logs.push(new Logging.ConsoleLog(culture, (text: string) => { console.log(text); })); }
 
     let log = new Logging.MultiLog(logs);
-    let writer = new Writers.MultiAzuResultsWriter(resultsWriters);
     let authenticator = new Azure.AzureAuthenticator();
     let resourceProvider = new Azure.AzureResourceProvider();
 
-    return new AzuApp(version, log, writer, authenticator, resourceProvider);
+    return new AzuApp(version, log, authenticator, resourceProvider);
 }

@@ -1,18 +1,15 @@
 import { AzuAuthSettings } from "./AzuAuthSettings";
-import { AzuOutputSettings } from "./AzuOutputSettings";
 import { AzuCoverageSettings } from "./AzuCoverageSettings";
+import { AzuOutputSettings } from "./AzuOutputSettings";
+import { AzuRunSettings } from "./AzuRunSettings";
+
 
 import fs from "fs";
 import YAML from "yaml";
-import { AzuXsltSettings } from "./AzuXsltSettings";
-import { isBoolean } from "util";
 
 export class AzuSettings {
 
-    public name: string = "";
-    public select: string = "";
-    public parameters: string = "";
-
+    public run: AzuRunSettings = new AzuRunSettings();
     public auth: AzuAuthSettings = new AzuAuthSettings();
     public coverage: AzuCoverageSettings = new AzuCoverageSettings();
     public output: AzuOutputSettings = new AzuOutputSettings();
@@ -23,10 +20,15 @@ export class AzuSettings {
         const json = YAML.parse(data);
 
         if (json) {
-            settings.name = AzuSettings.parseEnv(json.name);
-            settings.select = AzuSettings.parseEnv(json.select);
-            settings.parameters = AzuSettings.parseEnv(json.parameters);
-            
+
+            if (json.run) {
+                settings.run.name = AzuSettings.parseEnv(json.run.name);
+                settings.run.select = AzuSettings.parseEnv(json.run.select);
+                settings.run.parameters = AzuSettings.parseEnv(json.run.parameters);
+                settings.run.language = AzuSettings.parseEnv(json.run.lang);
+                settings.run.silent = AzuSettings.parseEnvBool(json.run.silent);
+            }
+
             if (json.auth) {
                 settings.auth.tenant = AzuSettings.parseEnv(json.auth.tenant);
                 settings.auth.appId = AzuSettings.parseEnv(json.auth.appId);
@@ -50,58 +52,58 @@ export class AzuSettings {
             }
 
             if (json.output) {
-                settings.output.culture = AzuSettings.parseEnv(json.output.lang);
-                settings.output.silentMode = AzuSettings.parseEnvBool(json.output.silent);
                 settings.output.outputJsonPath = AzuSettings.parseEnv(json.output.json);
                 settings.output.outputXmlPath = AzuSettings.parseEnv(json.output.xml);
-
-                if (json.output.transforms && Array.isArray(json.output.transforms)) {
-                    json.output.transforms.forEach((e : any) => {
-                        settings.output.transforms.push(new AzuXsltSettings(AzuSettings.parseEnv(e.transform), AzuSettings.parseEnv(e.output)));
-                    });
-                }
             }
         }
         return settings;
     }
 
     private static parseEnv(value: string): string {
-        if (value.length > 1 && value[0] == "$") {
-            const key = value.substring(1);
-            let val =  process.env[key];
-            if (val) {
-                return val;
+        if (value) {
+            if (value.length > 1 && value[0] == "$") {
+                const key = value.substring(1);
+                let val =  process.env[key];
+                if (val) {
+                    return val;
+                }
+                return "";
             }
-            return "";
+            
+            return value;
         }
-        
-        return value;
+        return "";
     }
 
     private static parseEnvInt(value: string, min: number, max?: number): number {
-        if (value.length > 1 && value[0] == "$") {
-            const key = value.substring(1);
-            let val =  process.env[key];
-            if (val) {
-                return Number.parseInt(val);
+        if (value) {
+            if (value.length > 1 && value[0] == "$") {
+                const key = value.substring(1);
+                let val =  process.env[key];
+                if (val) {
+                    return Number.parseInt(val);
+                }
+                return 0;
             }
-            return 0;
+            
+            return Number.parseInt(value);
         }
-        
-        return Number.parseInt(value);
+        return 0;
     }
 
     private static parseEnvFloat(value: string, min: number, max?: number): number {
-        if (value.length > 1 && value[0] == "$") {
-            const key = value.substring(1);
-            let val =  process.env[key];
-            if (val) {
-                return Number.parseFloat(val);
+        if (value) {
+            if (value.length > 1 && value[0] == "$") {
+                const key = value.substring(1);
+                let val =  process.env[key];
+                if (val) {
+                    return Number.parseFloat(val);
+                }
+                return 0;
             }
-            return 0;
+            return Number.parseFloat(value);
         }
-        
-        return Number.parseFloat(value);
+        return 0;
     }
 
     private static parseEnvBool(value: string): boolean {

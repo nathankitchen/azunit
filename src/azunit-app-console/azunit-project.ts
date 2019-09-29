@@ -11,14 +11,14 @@ program
 
 const config = App.AzuSettings.loadYaml(program.config);
 
-let app = App.createApp(config.output, Package.version);
+let app = App.createApp(config, Package.version);
 
 let exceptionHandler = (err: Error) => {
     app.logError(err);
     process.exitCode = 1;
 };
 
-glob(config.select, function (er, files) {
+glob(config.run.select, function (er, files) {
 
     app.useServicePrincipal(config.auth.tenant, config.auth.appId, config.auth.appKey)
         .then((principal) => {
@@ -40,9 +40,9 @@ glob(config.select, function (er, files) {
                         });
                     };
 
-                    subscription.createTestRun(config.name, files, config.parameters, fileLoader)
+                    subscription.createTestRun(config.run.name, files, config.run.parameters, fileLoader)
                         .then((results) => {
-                            let success = app.logResults(results);
+                            let success = app.logResults(results, config.output);
                             process.exitCode = (success) ? 0 : 1;
                         })
                         .catch(exceptionHandler);
