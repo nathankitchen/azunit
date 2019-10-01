@@ -1,8 +1,8 @@
 {
   "name": "azunit",
-  "version": "0.9.7",
+  "version": "1.0.0",
   "description": "A lightweight unit testing framework for Microsoft Azure based on the ARM resource graphs.",
-  "main": "dist/src/main.js",
+  "main": "dist/src/azunit-app-console/azunit.js",
   "bin": {
     "azunit": "dist/src/azunit-app-console/azunit.js"
   },
