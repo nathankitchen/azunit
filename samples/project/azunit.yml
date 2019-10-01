@@ -1,30 +1,25 @@
-name: 'Run me'
+---
+run:
+  name          : Run me
+  select        : ./samples/quickstart/*.js
+  parameters    : ./samples/quickstart/test.params.json
+  language      : enGb
+  silent        : false
 auth:
-  tenant       : 'cloudskus.onmicrosoft.com'
-  appId        : '$asdf'
-  appKey       : '$ENV'
-  subscription : 'asdf-asdf-asdf-asdf'
+  tenant        : $TENANT
+  appId         : $APP_ID
+  appKey        : $APP_KEY
+  subscription  : $SUBSCRIPTION
 coverage:
-  target       : 90
-  APR          : 1.5
-  failAPR      : false
-  failTarget   : true
+  resources:
+    threshold   : 90
+    fail        : true
+  APR:
+    threshold   : 1
+    fail        : true
+  AAPR:
+    threshold   : 1.2
+    fail        : true
 output:
-  silent       : false
-  xml          : '.azunit/output.xml'
-  json         : '.azunit/output.json'
-  html         : '.azunit/output.html'
-  markdown     : '.azunit/output.md'
-  csv          : '.azunit/output.csv'
-suite:
-  - select         : './1/*.spec.js'
-    parameters     : 'my-parameters1.json'
-    tags:          : [ "one", "two" ]
-  - select         : './2/*.spec.js'
-    parameters     : 'my-parameters2.json'
-    tags:          : [ "two", "three" ]
-
-azunit run file.js
-azunit project --config azunit.yml --tags two
-
-azunit init
+  json          : .azunit/output.json
+  xml           : .azunit/output.xml

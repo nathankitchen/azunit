@@ -302,3 +302,21 @@ export class TestAssertionDisabledSuccess extends AssertionMessage {
 export class TestAssertionDisabledFailure extends AssertionMessage {
     public getLocaleString(locale: Globalization.IAzuLocale) { return locale.test_assertion_disabled_fail; }
 }
+
+export class DumpResourceMessage extends AzuCultureMessage {
+    constructor(count: number, file: string) {
+        super();
+        this.count = count;
+        this.file = file;
+    }
+
+    public readonly count: number;
+    public readonly file: string;
+
+    protected formatMessage(message: string, tokenFormatter: TokenFormatterFunc, locale: Globalization.IAzuLocale) {
+        return message
+        .replace("{file}", tokenFormatter(this.file))
+        .replace("{count}", tokenFormatter(this.count.toString()));
+    }
+    protected getLocaleString(locale: Globalization.IAzuLocale) { return locale.dump_resource_complete; }
+}

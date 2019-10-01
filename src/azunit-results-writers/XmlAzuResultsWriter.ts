@@ -7,12 +7,20 @@ var XMLWriter = require("xml-writer");
 export class XmlAzuResultsWriter extends BaseAzuResultsWriter {
 
     write(run: Results.IAzuRunResult) {
-
         var ws = fs.createWriteStream(this.filename);
 
-        let xw = new XMLWriter(true, function(string: string, encoding: string) {
-            ws.write(string, encoding);
-        });
+        let writer = (message: string, encoding: string) => {
+            ws.write(message, encoding);
+        }
+
+        this.writeXml(run, writer);
+
+        ws.end();
+    }
+
+    protected writeXml(run: Results.IAzuRunResult, writer: (message: string, encoding: string) => void) {
+
+        let xw = new XMLWriter(true, writer);
 
         xw.startDocument('1.0', 'UTF-8')
             .startElement('azunit')
@@ -103,6 +111,5 @@ export class XmlAzuResultsWriter extends BaseAzuResultsWriter {
         xw.endElement();
 
         xw.endElement();
-        ws.end();
     }
 }

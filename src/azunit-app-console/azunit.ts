@@ -1,13 +1,18 @@
 #!/usr/bin/env node
-'use strict';
+"use strict";
 
-import program from 'commander';
-import pkg = require('../../package.json');
+import program from "commander";
+import pkg = require("../../package.json");
+var dotenv = require("dotenv");
+
+dotenv.config();
 
 program
     .name(pkg.name)
     .version(pkg.version)
     .description(pkg.description)
-    .command('run <tests>','Runs the specified tests').alias('r')
-    .command('project','Runs the specified project').alias('p')
+    .command("init", "Initialises a test project").alias("i")
+    .command("dump", "Dumps all resource data for debugging").alias("d")
+    .command("test <tests>", "Runs test files with command line arguments").alias("c")
+    .command("run <projects>", "Runs a test project from YAML config").alias("r")
     .parse(process.argv);
