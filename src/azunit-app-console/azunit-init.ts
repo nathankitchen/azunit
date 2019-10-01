@@ -1,54 +1,149 @@
-import * as App from "../azunit-app";
-import * as Package from "../../package.json";
-
 import program from "commander";
 import fs from "fs";
-import glob from "glob";
 
 program
-    .option("-c, --config <config>", "The configuration file to target")
     .parse(process.argv);
 
-const config = App.AzuSettings.loadYaml(program.config);
+const envFilename = ".env";
+const gitFilename = ".gitignore";
+const yamlFilename = "azunit.yml";
+const azureFilename = "src/azuredeploy.json";
+const azureParamsFilename = "src/azuredeploy.parameters.json";
+const paramsFilename = "test/parameters.json";
+const testFilename = "test/test.js";
 
-let app = App.createApp(config, Package.version);
+fs.exists(envFilename, (exists) => {
+    if (!exists) {
+        let ws = fs.createWriteStream(envFilename);
+        ws.write("TENANT=tenant.onmicrosoft.com\n");
+        ws.write("APP_ID=ffffffff-ffff-ffff-ffff-ffffffffffff\n");
+        ws.write("APP_KEY=00000000000000000000000000000000\n");
+        ws.write("SUBSCRIPTION=ffffffff-ffff-ffff-ffff-ffffffffffff\n");
+        ws.close();
+    }
+});
 
-let exceptionHandler = (err: Error) => {
-    app.logError(err);
-    process.exitCode = 1;
-};
+fs.exists(gitFilename, (exists) => {
+    if (!exists) {
+        let ws = fs.createWriteStream(gitFilename);
 
-glob(config.run.select, function (er, files) {
+        try {
+            ws.write("### AzUnit\n");
+            ws.write("/.azunit\n");
+            ws.write(".env\n");
+        }
+        finally {
+            ws.close();
+        }
+    }
+});
 
-    app.useServicePrincipal(config.auth.tenant, config.auth.appId, config.auth.appKey)
-        .then((principal) => {
 
-            principal.getSubscription(config.auth.subscription)
-                .then((subscription) => {
+fs.exists(yamlFilename, (exists) => {
+    if (!exists) {
+        let ws = fs.createWriteStream(yamlFilename);
 
-                    let fileLoader = (filename: string) => {
-                        return new Promise<string>((resolve, reject) => {
-                            if (filename) {
-                                fs.readFile(filename, "utf8", function (err, data) {
-                                    if (err) { reject(err); }
-                                    resolve(data);
-                                });
-                            }
-                            else {
-                                resolve("");
-                            }
-                        });
-                    };
+        try {
+            ws.write("---\n");
+            ws.write("run:\n");
+            ws.write("  name          : My glorious test run\n");
+            ws.write("  select        : ./test/*.js\n");
+            ws.write("  parameters    : ./test/parameters.json\n");
+            ws.write("  language      : enGb\n");
+            ws.write("  silent        : false\n");
+            ws.write("auth:\n");
+            ws.write("  tenant        : $TENANT\n");
+            ws.write("  appId         : $APP_ID\n");
+            ws.write("  appKey        : $APP_KEY\n");
+            ws.write("  subscription  : $SUBSCRIPTION\n");
+            ws.write("coverage:\n");
+            ws.write("  resources:\n");
+            ws.write("    threshold   : 90\n");
+            ws.write("    fail        : true\n");
+            ws.write("  APR:\n");
+            ws.write("    threshold   : 1\n");
+            ws.write("    fail        : true\n");
+            ws.write("  AAPR:\n");
+            ws.write("    threshold   : 1.2\n");
+            ws.write("    fail        : true\n");
+            ws.write("output:\n");
+            ws.write("  json          : ./.azunit/output.json\n");
+            ws.write("  xml           : ./.azunit/output.xml\n");
+        }
+        finally {
+            ws.close();
+        }
+    }
+});
 
-                    subscription.createTestRun(config.run.name, files, config.run.parameters, fileLoader)
-                        .then((results) => {
-                            let success = app.logResults(results, config.output);
-                            process.exitCode = (success) ? 0 : 1;
-                        })
-                        .catch(exceptionHandler);
-                })
-                .catch(exceptionHandler);
-        })
-        .catch(exceptionHandler);
-
+fs.mkdir(".azunit", (err) => {});
+fs.mkdir("src", (err) => {
+    // /src/azuredeploy.json file
+    fs.exists(azureFilename, (exists) => {
+        if (!exists) {
+            let ws = fs.createWriteStream(azureFilename);
+    
+            try {
+                ws.write(JSON.stringify({}));
+            }
+            finally {
+                ws.close();
+            }
+        }
     });
+
+    // /src/azuredeploy.parameters.json file
+    fs.exists(azureParamsFilename, (exists) => {
+        if (!exists) {
+            let ws = fs.createWriteStream(azureParamsFilename);
+    
+            try {
+                ws.write(JSON.stringify({}));
+            }
+            finally {
+                ws.close();
+            }
+        }
+    });
+});
+
+// /test/ directory
+fs.mkdir("test", (err) => {
+
+    // /test/parameters.json file
+    fs.exists(paramsFilename, (exists) => {
+        if (!exists) {
+            let ws = fs.createWriteStream(paramsFilename);
+    
+            try {
+                ws.write(JSON.stringify({ "hello": "world" }));
+            }
+            finally {
+                ws.close();
+            }
+        }
+    });
+
+    // /test/test.js file
+    fs.exists(testFilename, (exists) => {
+        if (!exists) {
+            let ws = fs.createWriteStream(testFilename);
+    
+            try {
+                ws.write("title(\"Sample test\");\n");
+                ws.write("\n");
+                ws.write("start(\"My first test\", (test) => {\n");
+                ws.write("\ttest.log.write(\"hello\" + parameters.hello);")
+                ws.write("\n");
+                ws.write("\tvar resources = test.selectResourcesByName(\"resourceName\");\n");
+                ws.write("\n");
+                ws.write("\tresources.shouldHaveInstanceCount.equals(0);\n");
+                ws.write("});\n");
+            }
+            finally {
+                ws.close();
+            }
+        }
+    });
+
+});

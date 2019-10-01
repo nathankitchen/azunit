@@ -13,6 +13,6 @@ program
     .description(pkg.description)
     .command("init", "Initialises a test project").alias("i")
     .command("dump", "Dumps all resource data for debugging").alias("d")
-    .command("cli <tests>", "Runs tests with command line arguments").alias("c")
+    .command("test <tests>", "Runs test files with command line arguments").alias("c")
     .command("run <projects>", "Runs a test project from YAML config").alias("r")
     .parse(process.argv);
