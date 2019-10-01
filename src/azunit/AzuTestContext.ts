@@ -4,12 +4,12 @@ import { IAzuTestContext } from "../azunit-client/IAzuTestContext";
 import { IAzuTestable } from "../azunit-client/IAzuTestable";
 import { IAzuClientLog } from "../azunit-client/IAzuClientLog";
 import { AzuClientLog } from "../azunit-client/AzuClientLog";
-import { IAzuResource } from "../azunit-client/IAzuResource";
+import { IAzuAppResource } from "./IAzuAppResource";
 import { AzuResourceSet } from "./AzuResourceSet";
 
 export class AzuTestContext implements IAzuTestContext {
 
-    constructor (log: Logging.IAzuLog, title: string, resources: Array<IAzuResource>) {
+    constructor (log: Logging.IAzuLog, title: string, resources: Array<IAzuAppResource>) {
         this._log = log;
         this._resources = resources;
 
@@ -23,7 +23,7 @@ export class AzuTestContext implements IAzuTestContext {
 
     public readonly log: IAzuClientLog;
 
-    private _resources: Array<IAzuResource>;
+    private _resources: Array<IAzuAppResource>;
     private _log: Logging.IAzuLog;
 
     selectResourcesByProvider(provider: string) : IAzuTestable {

@@ -2,10 +2,11 @@ import * as Client from "../azunit-client"
 import * as Logging from "../azunit-results-logging";
 
 import { AzuValue } from "./AzuValue";
+import { IAzuAppResource } from "./IAzuAppResource";
 
 import JsonPath from "jsonpath";
 
-export class AzuResource implements Client.IAzuResource {
+export class AzuResource implements IAzuAppResource {
 
     constructor(log: Logging.IAzuLog, resource: any) {
         this._log = log;
@@ -28,8 +29,14 @@ export class AzuResource implements Client.IAzuResource {
 
     private _resource: any;
 
-    shouldHaveProperty(selector: string) : Client.IAzuValue {
+    public shouldHaveProperty(selector: string) : Client.IAzuValue {
         let match = JsonPath.query(this._resource, selector);
         return new AzuValue(this._log, this.id, this.name, selector, match);
+    }
+
+    public getData(): Array<any> {
+        const data = new Array<any>();
+        data.push(this._resource);
+        return data;
     }
 }

@@ -3,7 +3,6 @@ import { AzuCoverageSettings } from "./AzuCoverageSettings";
 import { AzuOutputSettings } from "./AzuOutputSettings";
 import { AzuRunSettings } from "./AzuRunSettings";
 
-
 import fs from "fs";
 import YAML from "yaml";
 

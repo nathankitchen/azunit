@@ -87,4 +87,8 @@ export class Resources {
     static getAssertionDisabledFailureMessage(name: string, resource: string, actual: boolean) {
         return new Messages.TestAssertionDisabledFailure(name, resource, true, actual, AzuState.Failed);
     }
+
+    static dumpResourceComplete(count: number, file: string) {
+        return new Messages.DumpResourceMessage(count, file);
+    }
 }

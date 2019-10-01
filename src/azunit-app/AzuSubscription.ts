@@ -1,3 +1,4 @@
+import * as Core from "../azunit";
 import * as Client from "../azunit-client";
 import * as Logging from "../azunit-results-logging";
 
@@ -6,17 +7,19 @@ import { AzuFileLoaderFunc } from "./AzuFileLoaderFunc";
 import { AzuTestContext } from "../azunit/AzuTestContext";
 import { IAzuRunResult } from "../azunit-results";
 
+import fs from "fs";
 import * as VM from "vm";
+import * as I18n from "../azunit-i18n";
 
 export class AzuSubscription implements IAzuSubscription {
     
-    constructor (log: Logging.IAzuLog, subscriptionId: string, resources: Array<Client.IAzuResource>) {
+    constructor (log: Logging.IAzuLog, subscriptionId: string, resources: Array<Core.IAzuAppResource>) {
         this._log = log;
         this._resources = resources;
         this.subscriptionId = subscriptionId;
     }
 
-    private _resources: Array<Client.IAzuResource>;
+    private _resources: Array<Core.IAzuAppResource>;
     private _log: Logging.IAzuLog;
 
     public readonly subscriptionId: string;
@@ -101,5 +104,34 @@ export class AzuSubscription implements IAzuSubscription {
                     return this._log.endRun();
                 });
         });
+    }
+
+    public dump(filename: string): void {
+        if (filename) {
+            let resources = new Array<any>();
+
+            this._resources.forEach(r => {
+                const sub = r.getData();
+                sub.forEach(s => {
+                    resources.push(s);
+                });
+            });
+
+            let json = JSON.stringify(resources, null, 1);
+
+            var ws = null;
+
+            try {
+                ws = fs.createWriteStream(filename);
+                ws.write(json);
+            }
+            finally {
+                if (ws) {
+                    ws.end();
+                }
+
+                this._log.write(I18n.Resources.dumpResourceComplete(resources.length, filename));
+            }
+        }
     }
 }

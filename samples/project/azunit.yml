@@ -1,3 +1,4 @@
+---
 run:
   name          : Run me
   select        : ./samples/quickstart/*.js
