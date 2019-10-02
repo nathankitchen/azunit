@@ -4,7 +4,7 @@ import * as Logging from "../azunit-results-logging";
 import { AzuValue } from "./AzuValue";
 import { IAzuAppResource } from "./IAzuAppResource";
 
-import JsonPath from "jsonpath";
+import { JSONPath } from "jsonpath-plus";
 
 export class AzuResource implements IAzuAppResource {
 
@@ -30,7 +30,7 @@ export class AzuResource implements IAzuAppResource {
     private _resource: any;
 
     public shouldHaveProperty(selector: string) : Client.IAzuValue {
-        let match = JsonPath.query(this._resource, selector);
+        let match = JSONPath(selector, this._resource, undefined, undefined);
         return new AzuValue(this._log, this.id, this.name, selector, match);
     }
 
