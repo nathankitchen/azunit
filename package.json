@@ -14,7 +14,7 @@
     "commander": "^2.20.0",
     "dotenv": "^8.1.0",
     "glob": "^7.1.4",
-    "jsonpath": "^1.0.2",
+    "jsonpath-plus": "^1.1.0",
     "ms-rest-azure": "^3.0.0",
     "xml-writer": "^1.7.0",
     "yaml": "^1.6.0"
