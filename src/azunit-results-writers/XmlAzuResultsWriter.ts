@@ -2,11 +2,17 @@ import * as Results from "../azunit-results";
 import { BaseAzuResultsWriter } from "./BaseAzuResultsWriter";
 
 var fs = require("fs");
+var getDirName = require('path').dirname;
 var XMLWriter = require("xml-writer");
 
 export class XmlAzuResultsWriter extends BaseAzuResultsWriter {
 
     write(run: Results.IAzuRunResult) {
+
+        fs.mkdir(getDirName(this.filename), { recursive: true }, (err: Error) => {
+            if (err) throw err;
+        });
+        
         var ws = fs.createWriteStream(this.filename);
 
         let writer = (message: string, encoding: string) => {

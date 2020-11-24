@@ -9,6 +9,7 @@ import { AzuPrincipal } from "./AzuPrincipal";
 import { IAzuRunResult } from "../azunit-results";
 import { AzuState } from "../azunit";
 import { AzuOutputSettings } from "./AzuOutputSettings";
+import { fstat } from "fs";
 
 export class AzuApp implements IAzuApp {
 

@@ -1,6 +1,12 @@
-import Azure from "ms-rest-azure";
-import { ResourceManagementClient as RM } from "azure-arm-resource";
-import * as ResourceManager from "azure-arm-resource";
+//import Azure from "ms-rest-azure";
+//import { ResourceManagementClient as RM } from "azure-arm-resource";
+//import * as ResourceManager from "azure-arm-resource";
+
+import * as msRest from "@azure/ms-rest-js";
+import * as msRestAzure from "@azure/ms-rest-azure-js";
+import * as msRestNodeAuth from "@azure/ms-rest-nodeauth";
+import { ResourceManagementClient, ResourceManagementModels, ResourceManagementMappers } from "@azure/arm-resources";
+
 import { IAzureResourceProvider } from "./IAzureResourceProvider";
 import { IAzureToken } from "./IAzureToken";
 
@@ -11,9 +17,9 @@ export class AzureResourceProvider implements IAzureResourceProvider {
         return new Promise<any>(
             (resolve, reject) => {
 
-                const client = new RM.ResourceManagementClient(<Azure.ApplicationTokenCredentials>token.value, subscriptionId);
+                const client = new ResourceManagementClient(token.value, subscriptionId);
 
-                client.resources.list((err: Error, data?: ResourceManager.ResourceModels.ResourceListResult) => {
+                client.resources.list((err: Error, data?: ResourceManagementModels.ResourceListResult) => {
 
                     if (err) reject(err);
 
@@ -38,7 +44,7 @@ export class AzureResourceProvider implements IAzureResourceProvider {
                             return null;
                         }));
 
-                        let providerPromises = new Array<Promise<RM.ResourceManagementModels.Provider>>();
+                        let providerPromises = new Array<Promise<ResourceManagementModels.Provider>>();
 
                         types.forEach(t => {
                             if (t) {
@@ -51,7 +57,7 @@ export class AzureResourceProvider implements IAzureResourceProvider {
 
                             let apis = new Array();
 
-                            let resourcePromises = new Array<Promise<RM.ResourceManagementModels.Resource>>();
+                            let resourcePromises = new Array<Promise<ResourceManagementModels.Resource>>();
 
                             // Scan all the providers and pick out the highest API available for each
                             // resource.

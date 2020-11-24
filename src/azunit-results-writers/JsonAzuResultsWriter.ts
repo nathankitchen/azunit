@@ -2,6 +2,7 @@ import * as Results from "../azunit-results";
 import { BaseAzuResultsWriter } from "./BaseAzuResultsWriter";
 
 var fs = require("fs");
+var getDirName = require('path').dirname;
 
 export class JsonAzuResultsWriter extends BaseAzuResultsWriter {
 
@@ -48,6 +49,10 @@ export class JsonAzuResultsWriter extends BaseAzuResultsWriter {
             });
 
             doc.groups.push(fileDoc);
+        });
+
+        fs.mkdir(getDirName(this.filename), { recursive: true }, (err: Error) => {
+            if (err) throw err;
         });
 
         var ws = fs.createWriteStream(this.filename);
