@@ -5,6 +5,7 @@ export abstract class BaseAzuEvaluator implements IAzuRunEvaluator {
     
     constructor(start?: Date){
         this.start = (start) ? start : new Date();
+        this.end = undefined;
     }
 
     public readonly start: Date;

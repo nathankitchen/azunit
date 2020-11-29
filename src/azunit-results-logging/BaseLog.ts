@@ -17,49 +17,45 @@ export abstract class BaseLog implements IAzuLog {
     public abstract error(err: Error): void;
 
     protected getStackSize() {
-        if (this._stack) {
-            return this._stack.length;
-        }
-
-        return 0;
+        return this._stack.length;
     }
 
     public startRun(name: string, subscription: string, start?: Date): void {
-        if (this._stack.length != 0) { throw new Error("Logging failure: a run had already been started."); }
+        if (this.getStackSize() != 0) { throw new Error("Logging failure: a run had already been started."); }
         this.openRun(name, subscription, start);
         this._stack.push(name);
     }
 
     public startGroup(name: string, source: string, start?: Date): void {
-        if (this._stack.length != 1) { throw new Error("Logging failure: a test group has already been started."); }
+        if (this.getStackSize() != 1) { throw new Error("Logging failure: a test group has already been started."); }
         this.openGroup(name, source, start);
         this._stack.push(name);
     }
 
     public startTest(name: string, start?: Date): void {
-        if (this._stack.length != 2) { throw new Error("Logging failure: a test has already been started."); }
+        if (this.getStackSize() != 2) { throw new Error("Logging failure: a test has already been started."); }
         this.openTest(name, start);
         this._stack.push(name);
     }
     
     public assert(message: AssertionMessage, resourceId: string, resourceName: string, expected: any, actual: any): void {
-        if (this._stack.length != 3) { throw new Error("Logging failure: a test is not on the result stack."); }
+        if (this.getStackSize() != 3) { throw new Error("Logging failure: a test is not on the result stack."); }
         this.writeAssert(message, resourceId, resourceName, expected, actual);        
     }
     
     public endTest() {
-        if (this._stack.length != 3) { throw new Error("Logging failure: a test is not on the result stack."); }
+        if (this.getStackSize() != 3) { throw new Error("Logging failure: a test is not on the result stack."); }
         this.closeTest();
         this._stack.pop();
     }
     public endGroup(name?: string) {
-        if (this._stack.length != 2) { throw new Error("Logging failure: a test group is not on the result stack."); }
+        if (this.getStackSize() != 2) { throw new Error("Logging failure: a test group is not on the result stack."); }
         this.closeGroup();
         this._stack.pop();
     }
 
     public endRun() : Array<Results.IAzuRunResult> {
-        if (this._stack.length != 1) { throw new Error("Logging failure: a test group is not on the result stack."); }
+        if (this.getStackSize() != 1) { throw new Error("Logging failure: a test group is not on the result stack."); }
         let result = this.closeRun();
         this._stack.pop();
 
@@ -67,15 +63,15 @@ export abstract class BaseLog implements IAzuLog {
     }
 
     public abortRun(message: string) : Array<Results.IAzuRunResult> {
-        if (this._stack.length == 3) {
+        if (this.getStackSize() == 3) {
             this.closeTest();
         }
         
-        if (this._stack.length == 2) {
+        if (this.getStackSize() == 2) {
             this.closeGroup();
         }
 
-        if (this._stack.length == 1) {
+        if (this.getStackSize() == 1) {
             return this.closeRun();
         }
 
