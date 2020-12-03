@@ -52,7 +52,10 @@ start("Search Service", (test) => {
 
 To run your test you will need to create a Service Principal and assign it *Reader* permissions on the Azure Subscription(s) that you want to test. Full instructions can be found [here](https://github.com/Azure/azure-sdk-for-node/blob/master/Documentation/Authentication.md#service-principal-authentication).
 
-Finally, run AzUnit from shell passing details of the Service Principal, Tenant, and Subscrpition as parameters. You can call AzUnit multiple times for each environment you want to test. There are two options for calling AzUnit. You either load up all your parameters in a single command:
+Finally, run AzUnit from shell passing details of the Service Principal, Tenant, and Subscrpition as parameters. You can call AzUnit multiple times for each environment you want to test. There are two options for calling AzUnit: `test` or `run`.
+
+### Test mode
+Intended for use in terminal and allowing quick runs against different environments.
 
 ``` cli
 azunit test ./samples/quickstart/test.js \
@@ -64,7 +67,56 @@ azunit test ./samples/quickstart/test.js \
         --run-name "My glorious test run"
 ```
 
-Or you can leverage the YAML file and pass these parameters as configuration:
+### Run mode
+Leverage YAML file configuration to pass the same configuration in a more reusable way, suitable for sharing with a wider team.
+
+``` YML
+run:
+  name          : Web farm tests
+  select        : ./samples/quickstart/*.js
+  parameters    : ./samples/quickstart/test.params.json
+  language      : enGb
+  silent        : false
+auth:
+  tenant        : $TENANT
+  appId         : $APP_ID
+  appKey        : $APP_KEY
+  subscription  : $SUBSCRIPTION
+coverage:
+  resources:
+    threshold   : 90
+    fail        : true
+  APR:
+    threshold   : 1
+    fail        : true
+  AAPR:
+    threshold   : 1.2
+    fail        : true
+output:
+  json          : .azunit/output.json
+  xml           : .azunit/output.xml
+```
+
+Settings in the YAML file are as follows:
+
+|===================|====================================================|
+| Setting           | Description                                        |
+|===================|====================================================|
+| run/name          | A descriptive title for the run.                   |
+| run/select        | Glob for defining test JS files to process.        |
+| run/parameters    | JSON data passed to JS files to enable test reuse. |
+| run/language      | Language. Only enGb is currently supported.        |
+| run/silent        | Suppress console output (secure build scenarios?)  |
+| auth/tenant       | The tenant ID for the target subscription.         |
+| auth/appId        | The app ID with access to the subscription.        |
+| auth/appKey       | The app key to utilise this application.           |
+| auth/subscription | The subscription ID.                               |
+| output/json       | Path to store run results (in JSON format).        |
+| output/xml        | Path to store run results (in XML format).         |
+
+*Note: All values starting with `$` will be treated as environment variables and loaded appropriately. To avoid putting sensitive information in config files (which should be source controlled), set this information in local environment variables (on your dev machine or build pipeline) and reference the variable with the $ prefix (e.g. `appKey: $KEY`)*
+
+Finally, run AzUnit from your shell passing the configuration file as a parameter:
 
 ``` cli
 azunit run --config azunit.dev.yml
@@ -176,13 +228,4 @@ Samples of transforms that can serve as a basis for different projects can be fo
 Developer - Nathan Kitchen (@nathankitchen)
 
 ## License
- 
-The MIT License (MIT)
-
-Copyright (c) 2019 Nathan Kitchen
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This project is Open Source and licensed under [MIT](license.md).
