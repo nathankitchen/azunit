@@ -1,5 +1,5 @@
 # AzureUnit
-[![Build Status](https://travis-ci.com/nathankitchen/azunit.svg?branch=master)](https://travis-ci.com/nathankitchen/azunit)
+[![Build Status](https://travis-ci.com/nathankitchen/azunit.svg?branch=master)](https://travis-ci.com/nathankitchen/azunit) [![Join the chat at https://gitter.im/azunit/community](https://badges.gitter.im/azunit/community.svg)](https://gitter.im/azunit/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A unit testing framework for Microsoft Azure resources, written in NodeJS and TypeScript. Designed to test any Azure cloud environment with ARM-based resources.
 
