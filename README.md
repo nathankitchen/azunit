@@ -99,9 +99,8 @@ output:
 
 Settings in the YAML file are as follows:
 
-|===================|====================================================|
 | Setting           | Description                                        |
-|===================|====================================================|
+|-------------------|----------------------------------------------------|
 | run/name          | A descriptive title for the run.                   |
 | run/select        | Glob for defining test JS files to process.        |
 | run/parameters    | JSON data passed to JS files to enable test reuse. |
