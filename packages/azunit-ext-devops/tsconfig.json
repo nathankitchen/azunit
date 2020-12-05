@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "composite": true
+    },
+    "references": [
+        { "path": "../azunit-lib" }
+    ],
+    "include": [
+        "src/**/*.ts",
+        "package.json"
+    ], 
+}

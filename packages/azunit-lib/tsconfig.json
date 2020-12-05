@@ -1,20 +1,21 @@
 {
+    //"extends": "../../tsconfig.json",
     "compilerOptions": {
-        "module": "commonjs",
+        "module": "system",
         "esModuleInterop": true,
         "target": "es6",
         "noImplicitAny": true,
         "moduleResolution": "node",
-        "resolveJsonModule": true,
         "sourceMap": true,
+        "outDir": "./dist",
         "strict": true,
-        "types": ["node"]
+        "types": ["node"],
+        "composite": true
     },
-    "references": [
-        { "path": "packages/azunit-lib" },
-        { "path": "packages/azunit-console" },
-        { "path": "packages/azunit-ext-devops" }
-    ],
+    "include": [
+        "src/**/*.ts",
+        "package.json"
+    ], 
     "exclude": [
         "node_modules"
     ]

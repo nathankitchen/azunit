@@ -1,0 +1,26 @@
+{
+  "name": "azunit-ext-devops",
+  "version": "1.0.7",
+  "description": "Azure DevOps Task for lightweight unit testing framework for Microsoft Azure based on the ARM resource graphs.",
+  "dependencies": {
+    "azure-pipelines-task-lib": "^2.11.4",
+    "azunit-lib": "../azunit-lib"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nathankitchen/azunit.git"
+  },
+  "keywords": [
+    "unit",
+    "test",
+    "azure"
+  ],
+  "author": "Nathan Kitchen",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/q": "^1.5.4"
+  }
+}

@@ -20,7 +20,7 @@ pids
 node_modules/
 
 # Don't source control the build output
-/dist
+dist/
 
 # Ignore my test outputs
 .azunit/

@@ -1,0 +1,31 @@
+{
+    "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+    "id": "dce5e0ae-6d48-4885-ae33-e67da43d0bc0",
+    "name": "AzUnitTestRunner",
+    "friendlyName": "AzUnit Test Runner",
+    "description": "A lightweigh test framework for Azure which validates provisioned ARM templates.",
+    "helpMarkDown": "",
+    "category": "Utility",
+    "author": "Nathan Kitchen",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0
+    },
+    "instanceNameFormat": "Echo $(samplestring)",
+    "inputs": [
+        {
+            "name": "config",
+            "type": "string",
+            "label": "Configuration file",
+            "defaultValue": "azunit.yml",
+            "required": true,
+            "helpMarkDown": "Path to your AzUnit configuration file"
+        }
+    ],
+    "execution": {
+        "Node10": {
+            "target": "index.js"
+        }
+    }
+}
