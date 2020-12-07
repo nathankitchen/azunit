@@ -3,8 +3,8 @@ import { AzuCoverageSettings } from "./AzuCoverageSettings";
 import { AzuOutputSettings } from "./AzuOutputSettings";
 import { AzuRunSettings } from "./AzuRunSettings";
 
-import fs from "fs";
-import YAML from "yaml";
+var fs = require("fs");
+var YAML = require("yaml");
 
 export class AzuSettings {
 

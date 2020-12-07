@@ -1,17 +1,53 @@
-import * as Azu from "azunit-lib";
-import * as tl from "azure-pipelines-task-lib/task";
+import * as App from "azunit-lib";
+import * as Task from "azure-pipelines-task-lib/task";
+import * as Package from "../package.json";
+import glob from "glob";
 
 async function run() {
     try {
-        const inputString: string | undefined = tl.getInput('samplestring', true);
-        if (inputString == 'bad') {
-            tl.setResult(tl.TaskResult.Failed, 'Bad input was given');
+        const configPath: string | undefined = Task.getInput('config', true);
+
+        if (configPath == undefined) {
+            Task.setResult(Task.TaskResult.Failed, 'No path to YML configuration was provided');
             return;
         }
-        console.log('Hello', inputString);
+        console.log('Hello', configPath);
+
+        const config = App.AzuSettings.loadYaml(configPath);
+
+        let app = App.createApp(config, Package.version);
+        
+        let exceptionHandler = (err: Error) => {
+            app.logError(err);
+            process.exitCode = 1;
+        };
+        
+        glob(config.run.select, function (er, files) {
+        
+            app.useServicePrincipal(config.auth.tenant, config.auth.appId, config.auth.appKey)
+                .then((principal) => {
+        
+                    principal.getSubscription(config.auth.subscription)
+                        .then((subscription) => {
+        
+                            subscription.createTestRun(config.run.name, files, config.run.parameters, App.FileLoaderFunc)
+                                .then((results) => {
+                                    let success = app.logResults(results, config.output);
+                                    if (!success) {
+                                        Task.setResult(Task.TaskResult.SucceededWithIssues, 'Completed AzUnit test run with failures');
+                                    }
+                                })
+                                .catch(exceptionHandler);
+                        })
+                        .catch(exceptionHandler);
+                })
+                .catch(exceptionHandler);
+            });
+
+
     }
     catch (err) {
-        tl.setResult(tl.TaskResult.Failed, err.message);
+        Task.setResult(Task.TaskResult.Failed, err.message);
     }
 }
 

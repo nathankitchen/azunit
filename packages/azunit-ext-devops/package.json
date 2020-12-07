@@ -3,8 +3,9 @@
   "version": "1.0.7",
   "description": "Azure DevOps Task for lightweight unit testing framework for Microsoft Azure based on the ARM resource graphs.",
   "dependencies": {
+    "azunit-lib": "../azunit-lib",
     "azure-pipelines-task-lib": "^2.11.4",
-    "azunit-lib": "../azunit-lib"
+    "glob": "^7.1.6"
   },
   "scripts": {
     "build": "tsc"
@@ -21,6 +22,10 @@
   "author": "Nathan Kitchen",
   "license": "MIT",
   "devDependencies": {
-    "@types/q": "^1.5.4"
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^8.0.4",
+    "@types/q": "^1.5.4",
+    "mocha": "^8.2.1",
+    "sync-request": "^6.1.0"
   }
 }

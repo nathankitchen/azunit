@@ -10,8 +10,7 @@ import { AzuOutputSettings } from "./AzuOutputSettings";
 import { AzuAuthSettings } from "./AzuAuthSettings";
 import { AzuApp } from "./AzuApp";
 import { AzuSettings } from "./AzuSettings";
-
-import fs from "fs";
+var fs = require("fs");
 import { AzuFileLoaderFunc } from "./AzuFileLoaderFunc";
 
 export { 

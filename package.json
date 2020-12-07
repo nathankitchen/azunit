@@ -3,7 +3,8 @@
     "@types/node": "^14.14.10"
   },
   "scripts": {
-    "build": "tsc --build"
+    "build": "tsc --build",
+    "ext-devops": "node packages/azunit-ext-devops/dist/src/index.js"
   },
   "dependencies": {
     "typescript": "^4.1.2"

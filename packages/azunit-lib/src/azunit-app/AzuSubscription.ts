@@ -6,7 +6,7 @@ import { IAzuSubscription } from "./IAzuSubscription";
 import { AzuFileLoaderFunc } from "./AzuFileLoaderFunc";
 import { IAzuRunResult } from "../azunit-results";
 
-import fs from "fs";
+var fs = require("fs");
 import * as VM from "vm";
 import * as I18n from "../azunit-i18n";
 

@@ -1,0 +1,36 @@
+{
+    "manifestVersion": 1,
+    "id": "azunit-test-runner",
+    "name": "AzUnit Test Runner",
+    "version": "0.0.1",
+    "publisher": "Nathan Kitchen",
+    "targets": [
+        {
+            "id": "Microsoft.VisualStudio.Services"
+        }
+    ],    
+    "description": "Tools for building/releasing with Fabrikam. Includes one build/release task.",
+    "categories": [
+        "Azure Pipelines"
+    ],
+    "icons": {
+        "default": "images/azunit.png"        
+    },
+    "files": [
+        {
+            "path": "packages/azunit-ext-devops"
+        }
+    ],
+    "contributions": [
+        {
+            "id": "custom-build-release-task",
+            "type": "ms.vss-distributed-task.task",
+            "targets": [
+                "ms.vss-distributed-task.tasks"
+            ],
+            "properties": {
+                "name": "packages/azunit-ext-devops"
+            }
+        }
+    ]
+}
