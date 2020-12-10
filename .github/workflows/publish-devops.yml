@@ -23,7 +23,7 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - run: npm install
+    - run: npm run-script install --if-present
     - run: npm run-script build --if-present
     - run: npm install -g tfx-cli
     - run: tfx version
