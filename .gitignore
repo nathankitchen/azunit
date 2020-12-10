@@ -26,6 +26,10 @@ dist/
 .azunit/
 .nyc_output/
 
+# Ignore build outputs
+/pkg
+*.vsix
+
 # Test harness
 run.sh
 project.sh

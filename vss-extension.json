@@ -3,7 +3,7 @@
     "id": "azunit-test-runner",
     "name": "AzUnit Test Runner",
     "version": "0.0.1",
-    "publisher": "Nathan Kitchen",
+    "publisher": "nathan-kitchen",
     "targets": [
         {
             "id": "Microsoft.VisualStudio.Services"
@@ -18,7 +18,7 @@
     },
     "files": [
         {
-            "path": "packages/azunit-ext-devops"
+            "path": "packages/azunit-ext-devops/dist"
         }
     ],
     "contributions": [
@@ -27,10 +27,7 @@
             "type": "ms.vss-distributed-task.task",
             "targets": [
                 "ms.vss-distributed-task.tasks"
-            ],
-            "properties": {
-                "name": "packages/azunit-ext-devops"
-            }
+            ]
         }
     ]
 }

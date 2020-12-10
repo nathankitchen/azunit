@@ -10,7 +10,7 @@ jobs:
     # Name the Job
     name: Build the thing
     # Set the type of machine to run on
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
