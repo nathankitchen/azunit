@@ -1,0 +1,30 @@
+name: Publish-DevOps
+
+# Run this workflow every time a new commit pushed to your repository
+on: push
+
+jobs:
+  # Set the job key. The key is displayed as the job name
+  # when a job name is not provided
+  build-it:
+    # Name the Job
+    name: Build the thing
+    # Set the type of machine to run on
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [8.x, 10.x, 12.x]
+
+    steps:
+    - uses: actions/checkout@v2
+  
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - run: npm install
+    - run: npm run-script build --if-present
+    - run: npm install -g tfx-cli
+    - run: tfx version
+  

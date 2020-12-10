@@ -40,12 +40,12 @@ describe('Sample task tests', function () {
     
         tr.run();
         console.log(tr.succeeded);
-        assert.equal(tr.succeeded, false, 'should have failed');
-        assert.equal(tr.warningIssues.length, 0, "should have no warnings");
-        assert.equal(tr.errorIssues.length, 1, "should have 1 error issue");
-        assert.equal(tr.errorIssues[0], 'Bad input was given', 'error issue output');
-        assert.equal(tr.stdout.indexOf('Hello bad'), -1, "Should not display Hello bad");
-    
+        assert.strictEqual(tr.succeeded, false, 'should have failed');
+        assert.strictEqual(tr.warningIssues.length, 0, "should have no warnings");
+        assert.strictEqual(tr.errorIssues.length, 1, "should have 1 error issue");
+        assert.strictEqual(tr.errorIssues[0], 'Bad input was given', 'error issue output');
+        assert.strictEqual(tr.stdout.indexOf('Hello bad'), -1, "Should not display Hello bad");
+
         done();
     });
 });
