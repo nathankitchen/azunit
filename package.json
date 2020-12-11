@@ -6,7 +6,8 @@
     "build": "tsc --build",
     "install": "npm --prefix packages/azunit-lib install packages/azunit-lib && npm --prefix packages/azunit-console install packages/azunit-console && npm --prefix packages/azunit-ext-devops install packages/azunit-ext-devops",
     "pack-devops": "tfx extension create --manifest-globs vss-extension.json --output-path pkg",
-    "ext-devops": "node packages/azunit-ext-devops/dist/src/index.js"
+    "run-devops": "node packages/azunit-ext-devops/dist/src/index.js",
+    "test-devops": "tsc -p packages/azunit-ext-devops/tsconfig.test.json && npx mocha packages/azunit-ext-devops/dist/_suite.js"
   },
   "dependencies": {
     "typescript": "^4.1.2"

@@ -5,7 +5,8 @@ import glob from "glob";
 
 async function run() {
     try {
-        const configPath: string | undefined = Task.getInput('config', true);
+        console.log('Hello');
+        const configPath: string | undefined = Task.getInput('config', false);
 
         if (configPath == undefined) {
             Task.setResult(Task.TaskResult.Failed, 'No path to YML configuration was provided');
@@ -35,6 +36,9 @@ async function run() {
                                     let success = app.logResults(results, config.output);
                                     if (!success) {
                                         Task.setResult(Task.TaskResult.SucceededWithIssues, 'Completed AzUnit test run with failures');
+                                    }
+                                    else {
+                                        Task.setResult(Task.TaskResult.Succeeded, 'Completed AzUnit test with success');
                                     }
                                 })
                                 .catch(exceptionHandler);
