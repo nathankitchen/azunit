@@ -3,7 +3,7 @@
   "version": "1.0.7",
   "description": "Azure DevOps Task for lightweight unit testing framework for Microsoft Azure based on the ARM resource graphs.",
   "dependencies": {
-    "azunit-lib": "../azunit-lib",
+    "azunit-lib": "file:../azunit-lib",
     "azure-pipelines-task-lib": "^2.12.0",
     "glob": "^7.1.6",
     "typescript": "^4.1.3"

@@ -12,18 +12,17 @@ describe('Sample task tests', function () {
     after(() => { });
 
     it('should succeed with simple inputs', function(done: Mocha.Done) {
-        this.timeout(1000);
+        this.timeout(10000);
 
         let tp = path.join(__dirname, 'success.js');
 
         let tr: ttm.MockTestRunner = new ttm.MockTestRunner(tp);
-
         tr.run();
-        
-        assert.strictEqual(tr.succeeded, false, 'should have succeeded');
+        console.log(tr.stdout); 
+        assert.strictEqual(tr.succeeded, true, 'should have succeeded');
         //assert.strictEqual(tr.warningIssues.length, 0, "should have no warnings");
         //assert.strictEqual(tr.errorIssues.length, 0, "should have no errors");
-        //console.log(tr.stdout);
+       
         //assert.strictEqual(tr.stdout.indexOf('Hello human') >= 0, true, "should display Hello human");
         done();
     });
@@ -35,7 +34,6 @@ describe('Sample task tests', function () {
         let tr: ttm.MockTestRunner = new ttm.MockTestRunner(tp);
     
         tr.run();
-        console.log(tr.succeeded);
         assert.strictEqual(tr.succeeded, false, 'should have failed');
         //assert.strictEqual(tr.warningIssues.length, 0, "should have no warnings");
         //assert.strictEqual(tr.errorIssues.length, 1, "should have 1 error issue");

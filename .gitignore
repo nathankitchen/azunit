@@ -26,6 +26,9 @@ dist/
 .azunit/
 .nyc_output/
 
+# VS pipeline
+.taskkey
+
 # Ignore build outputs
 /pkg
 *.vsix

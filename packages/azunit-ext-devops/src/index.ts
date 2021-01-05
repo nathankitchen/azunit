@@ -2,11 +2,13 @@ import * as App from "azunit-lib";
 import * as Task from "azure-pipelines-task-lib/task";
 import * as Package from "../package.json";
 import glob from "glob";
+import path from "path";
 
 async function run() {
     try {
-        console.log('Hello');
-        const configPath: string | undefined = Task.getInput('config', false);
+        const inputPath: string | undefined = Task.getInput('config', false);
+        
+        let configPath = path.join(__dirname, inputPath || "azunit.yml");
 
         if (configPath == undefined) {
             Task.setResult(Task.TaskResult.Failed, 'No path to YML configuration was provided');
